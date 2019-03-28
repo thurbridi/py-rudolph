@@ -1,11 +1,21 @@
-from abc import ABC, abstractmethod
+'''Contains displayable object definitions.'''
 import numpy as np
+from abc import ABC, abstractmethod
 from typing import NamedTuple
 
 
-class Vec2(NamedTuple):
-    x: float
-    y: float
+class Vec2(np.ndarray):
+    def __new__(cls, x: int, y: int):
+        obj = np.asarray([x, y]).view(cls)
+        return obj
+
+    @property
+    def x(self):
+        return self[0]
+
+    @property
+    def y(self):
+        return self[1]
 
 
 class Rect():
@@ -38,8 +48,33 @@ class Rect():
         return self.ymax - self.ymin
 
 
+class Viewport(NamedTuple):
+    min: Vec2
+    max: Vec2
+    window: Rect
+
+    def transform(self, p: Vec2):
+        if not isinstance(p, Vec2):
+            p = Vec2(p[0], p[1])
+
+        view_size = Vec2(
+            self.max.x - self.min.x,
+            self.max.y - self.min.y
+        )
+
+        win_size = Vec2(
+            self.window.max.x - self.window.min.x,
+            self.window.max.y - self.window.min.y
+        )
+        return Vec2(
+            (p.x - self.min.x) * view_size.x / win_size.x,
+            (p.y - self.min.y) * view_size.y / win_size.y,
+        )
+
+
+
 class GraphicObject(ABC):
-    def __init__(self, name=""):
+    def __init__(self, name=''):
         super().__init__()
         self.name = name
 
@@ -49,7 +84,7 @@ class GraphicObject(ABC):
 
 
 class Point(GraphicObject):
-    def __init__(self, pos: Vec2, name=""):
+    def __init__(self, pos: Vec2, name=''):
         super().__init__(name)
 
         self.pos = np.array(pos, dtype=float)
@@ -70,7 +105,7 @@ class Point(GraphicObject):
 
 
 class Line(GraphicObject):
-    def __init__(self, start: Vec2, end: Vec2, name=""):
+    def __init__(self, start: Vec2, end: Vec2, name=''):
         super().__init__(name)
 
         self.points = np.array([start, end], dtype=float)
@@ -101,7 +136,7 @@ class Line(GraphicObject):
 
 
 class Polygon(GraphicObject):
-    def __init__(self, vertices, name=""):
+    def __init__(self, vertices, name=''):
         self.name = name
         self.vertices = np.array(vertices, dtype=float)
 
