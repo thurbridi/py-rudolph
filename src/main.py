@@ -20,6 +20,7 @@ class Application(Gtk.Application):
         if not self.window:
             main_window = MainWindow(application=self, title='Rudolph')
             self.window = main_window.window
+            self.window.set_application(self)
 
         self.window.present()
 

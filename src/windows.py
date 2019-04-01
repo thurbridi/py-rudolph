@@ -1,21 +1,21 @@
 import gi
 gi.require_version('Gtk', '3.0')
-gi.require_foreign("cairo")
+gi.require_foreign('cairo')
 from gi.repository import Gtk, Gdk
 from graphics import Point, Line, Polygon, Vec2, Rect
 import numpy as np
 
 
 NB_PAGES = {
-    0: "point",
-    1: "line",
-    2: "polygon"
+    0: 'point',
+    1: 'line',
+    2: 'polygon'
 }
 
 BUTTON_EVENTS = {
-    1: "left",
-    2: "middle",
-    3: "right",
+    1: 'left',
+    2: 'middle',
+    3: 'right',
 }
 
 
@@ -31,18 +31,18 @@ class NewObjectDialogHandler:
 
         page_num = notebook.get_current_page()
 
-        name = self.builder.get_object("entry_name").get_text()
-        if NB_PAGES[page_num] == "point":
-            x = float(self.builder.get_object("entryX").get_text())
-            y = float(self.builder.get_object("entryY").get_text())
+        name = self.builder.get_object('entry_name').get_text()
+        if NB_PAGES[page_num] == 'point':
+            x = float(self.builder.get_object('entryX').get_text())
+            y = float(self.builder.get_object('entryY').get_text())
 
             self.dialog.new_object = Point(Vec2(x, y), name=name)
 
-        elif NB_PAGES[page_num] == "line":
-            y2 = float(self.builder.get_object("entryY2").get_text())
-            x1 = float(self.builder.get_object("entryX1").get_text())
-            y1 = float(self.builder.get_object("entryY1").get_text())
-            x2 = float(self.builder.get_object("entryX2").get_text())
+        elif NB_PAGES[page_num] == 'line':
+            y2 = float(self.builder.get_object('entryY2').get_text())
+            x1 = float(self.builder.get_object('entryX1').get_text())
+            y1 = float(self.builder.get_object('entryY1').get_text())
+            x2 = float(self.builder.get_object('entryX2').get_text())
 
             self.dialog.new_object = Line(
                 Vec2(x1, y1),
@@ -50,7 +50,7 @@ class NewObjectDialogHandler:
                 name=name
             )
 
-        elif NB_PAGES[page_num] == "polygon":
+        elif NB_PAGES[page_num] == 'polygon':
             if len(self.vertices) >= 3:
                 self.dialog.new_object = Polygon(self.vertices, name=name)
         else:
@@ -98,10 +98,10 @@ class MainWindowHandler:
         self.press_start = None
 
     def on_destroy(self, *args):
-        Gtk.main_quit()
+        self.window.get_application().quit()
 
     def on_draw(self, widget, cr):
-        print(f"{len(self.display_file)} objects to draw")
+        print(f'{len(self.display_file)} objects to draw')
         vp_w = widget.get_allocated_width()
         vp_h = widget.get_allocated_height()
 
