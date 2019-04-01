@@ -1,14 +1,21 @@
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_foreign("cairo")
-from gi.repository import Gtk
-from graphics import Point, Line, Polygon, Vec2
+from gi.repository import Gtk, Gdk
+from graphics import Point, Line, Polygon, Vec2, Rect
+import numpy as np
 
 
-nb_pages = {
+NB_PAGES = {
     0: "point",
     1: "line",
     2: "polygon"
+}
+
+BUTTON_EVENTS = {
+    1: "left",
+    2: "middle",
+    3: "right",
 }
 
 
@@ -25,25 +32,25 @@ class NewObjectDialogHandler:
         page_num = notebook.get_current_page()
 
         name = self.builder.get_object("entry_name").get_text()
-        if nb_pages[page_num] == "point":
-            x = self.builder.get_object("entryX").get_text()
-            y = self.builder.get_object("entryY").get_text()
+        if NB_PAGES[page_num] == "point":
+            x = float(self.builder.get_object("entryX").get_text())
+            y = float(self.builder.get_object("entryY").get_text())
 
-            self.dialog.new_object = Point(float(x), float(y), name=name)
+            self.dialog.new_object = Point(Vec2(x, y), name=name)
 
-        elif nb_pages[page_num] == "line":
-            x1 = self.builder.get_object("entryX1").get_text()
-            y1 = self.builder.get_object("entryY1").get_text()
-            x2 = self.builder.get_object("entryX2").get_text()
-            y2 = self.builder.get_object("entryY2").get_text()
+        elif NB_PAGES[page_num] == "line":
+            y2 = float(self.builder.get_object("entryY2").get_text())
+            x1 = float(self.builder.get_object("entryX1").get_text())
+            y1 = float(self.builder.get_object("entryY1").get_text())
+            x2 = float(self.builder.get_object("entryX2").get_text())
 
             self.dialog.new_object = Line(
-                float(x1), float(y1),
-                float(x2), float(y2),
+                Vec2(x1, y1),
+                Vec2(x2, y2),
                 name=name
             )
 
-        elif nb_pages[page_num] == "polygon":
+        elif NB_PAGES[page_num] == "polygon":
             if len(self.vertices) >= 3:
                 self.dialog.new_object = Polygon(self.vertices, name=name)
         else:
@@ -84,21 +91,34 @@ class MainWindowHandler:
         self.window = self.builder.get_object("main_window")
         self.object_store = self.builder.get_object("object_store")
         self.display_file = []
+        self.world_window = Rect(
+            Vec2(0, 0),
+            Vec2(600, 300)
+        )
+        self.press_start = None
 
     def on_destroy(self, *args):
         Gtk.main_quit()
 
     def on_draw(self, widget, cr):
         print(f"{len(self.display_file)} objects to draw")
+        vp_w = widget.get_allocated_width()
+        vp_h = widget.get_allocated_height()
+
         cr.set_line_width(2.0)
         cr.paint()
         cr.set_source_rgb(0.8, 0.0, 0.0)
 
-        for object in self.display_file:
-            if object:
-                object.draw(cr)
+        window_w = self.world_window.width
+        window_h = self.world_window.height
 
-        cr.stroke()
+        transform = lambda v: Vec2(
+            ((v.x - self.world_window.xmin) / window_w) * vp_w,
+            (1 - ((v.y - self.world_window.ymin) / window_h)) * vp_h
+        )
+
+        for object in self.display_file:
+            object.draw(cr, transform)
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
@@ -127,6 +147,38 @@ class MainWindowHandler:
             program_name="Rudolph"
         )
         about_dialog.run()
+
+    def on_button_press(self, widget, event):
+        if BUTTON_EVENTS[event.button] == 'left':
+            # register x, y
+            self.press_start = np.array([-event.x, event.y], dtype=float)
+            self.dragging = True
+
+    def on_motion(self, widget, event):
+        # register x, y
+        # translate window
+        if self.dragging:
+            current = np.array([-event.x, event.y], dtype=float)
+            delta = current - self.press_start
+            self.press_start = current
+            self.world_window.min += delta
+            self.world_window.max += delta
+            widget.queue_draw()
+
+    def on_button_release(self, widget, event):
+        if BUTTON_EVENTS[event.button] == 'left':
+            self.dragging = False
+
+    def on_scroll(self, widget, event):
+        if event.direction == Gdk.ScrollDirection.UP:
+            # zoom in 10%
+            self.world_window.max *= 0.9
+
+        elif event.direction == Gdk.ScrollDirection.DOWN:
+            # zoom out 10%
+            self.world_window.max *= 1.1
+
+        widget.queue_draw()
 
 
 class MainWindow(Gtk.ApplicationWindow):
