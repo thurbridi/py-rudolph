@@ -6,7 +6,7 @@ gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
 
 from gi.repository import Gtk, Gdk
-from graphics import Point, Line, Polygon, Vec2, Rect, offset
+from graphics import Point, Line, Polygon, Vec2, Rect
 
 
 NB_PAGES = {
@@ -104,7 +104,6 @@ class MainWindowHandler:
         self.window.get_application().quit()
 
     def on_draw(self, widget, cr):
-        print(f'{len(self.display_file)} objects to draw')
         vp_w = widget.get_allocated_width()
         vp_h = widget.get_allocated_height()
 
@@ -184,14 +183,16 @@ class MainWindowHandler:
         widget.queue_draw()
 
     def on_press_direction(self, widget):
-        print(f'pressou {widget.get_name()}')
-
         CALLBACKS = {
-            'window-move-left': partial(offset, self.world_window, [-10, 0]),
-            'window-move-right': partial(offset, self.world_window, [10, 0]),
-            'window-move-up': partial(offset, self.world_window, [0, -10]),
-            'window-move-down': partial(offset, self.world_window, [0, 10]),
-            'window-center-view': partial(offset, self.world_window, -self.world_window.min),
+            'window-move-left'    : partial(self.world_window.offset, [-10, 0]),
+            'window-move-right'   : partial(self.world_window.offset, [10, 0]),
+            'window-move-up'      : partial(self.world_window.offset, [0, -10]),
+            'window-move-down'    : partial(self.world_window.offset, [0, 10]),
+            'window-center-view'  : partial(self.world_window.offset, -self.world_window.min),
+            'window-rotate-left'  : partial(self.world_window.rotate, -10),
+            'window-rotate-right' : partial(self.world_window.rotate, 10),
+            'window-zoom-in'      : partial(self.world_window.zoom, 0.9),
+            'window-zoom-out'     : partial(self.world_window.zoom, 1.1),
         }
 
         CALLBACKS[widget.get_name()]()

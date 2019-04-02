@@ -1,6 +1,9 @@
 '''Contains displayable object definitions.'''
+import cairo
 import numpy as np
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from math import cos, sin, radians
 from typing import NamedTuple
 
 
@@ -10,11 +13,11 @@ class Vec2(np.ndarray):
         return obj
 
     @property
-    def x(self):
+    def x(self) -> float:
         return self[0]
 
     @property
-    def y(self):
+    def y(self) -> float:
         return self[1]
 
 
@@ -47,14 +50,27 @@ class Rect():
     def height(self):
         return self.ymax - self.ymin
 
+    def offset(self, offset: Vec2):
+        self.min += offset
+        self.max += offset
 
-def offset(rect: Rect, offset: Vec2):
-    print(f'offset: {rect.min} -> {rect.min + offset}')
-    rect.min += offset
-    rect.max += offset
+    def rotate(self, angle: float):
+        angle = radians(angle)
+        rot_matrix = np.array([
+            cos(angle), -sin(angle),
+            sin(angle), cos(angle),
+        ]).reshape(2, 2)
+
+        self.min = self.min @ rot_matrix
+        self.max = self.max @ rot_matrix
+
+    def zoom(self, amount: float):
+        self.min *= amount
+        self.max *= amount
 
 
-class Viewport(NamedTuple):
+@dataclass
+class Viewport:
     min: Vec2
     max: Vec2
     window: Rect
@@ -86,7 +102,7 @@ class GraphicObject(ABC):
         self.name = name
 
     @abstractmethod
-    def draw(self, cr, transform):
+    def draw(self, cr: cairo.Context, transform):
         pass
 
 
@@ -97,14 +113,14 @@ class Point(GraphicObject):
         self.pos = np.array(pos, dtype=float)
 
     @property
-    def x(self):
+    def x(self) -> float:
         return self.pos[0]
 
     @property
-    def y(self):
+    def y(self) -> float:
         return self.pos[1]
 
-    def draw(self, cr, transform=lambda v: v):
+    def draw(self, cr: cairo.Context, transform=lambda v: v):
         coord_vp = transform(Vec2(self.x, self.y))
         cr.move_to(coord_vp.x, coord_vp.y)
         cr.arc(coord_vp.x, coord_vp.y, 1, 0, 2 * np.pi)
@@ -133,7 +149,7 @@ class Line(GraphicObject):
     def y2(self):
         return self.points[1, 1]
 
-    def draw(self, cr, transform=lambda v: v):
+    def draw(self, cr: cairo.Context, transform=lambda v: v):
         coord_vp1 = transform(Vec2(self.x1, self.y1))
         coord_vp2 = transform(Vec2(self.x2, self.y2))
 
@@ -147,7 +163,7 @@ class Polygon(GraphicObject):
         self.name = name
         self.vertices = np.array(vertices, dtype=float)
 
-    def draw(self, cr, transform=lambda v: v):
+    def draw(self, cr: cairo.Context, transform=lambda v: v):
         start = self.vertices[0, :]
         start_vp = transform(Vec2(start[0], start[1]))
         cr.move_to(start_vp.x, start_vp.y)

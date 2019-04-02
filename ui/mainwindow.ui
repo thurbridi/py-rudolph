@@ -336,10 +336,12 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_in">
+                                <property name="name">window-zoom-in</property>
                                 <property name="label" translatable="yes">+</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">3</property>
@@ -348,10 +350,12 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_out">
+                                <property name="name">window-zoom-out</property>
                                 <property name="label" translatable="yes">-</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">3</property>
@@ -360,10 +364,12 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_rot_left">
+                                <property name="name">window-rotate-left</property>
                                 <property name="label" translatable="yes">↶</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -372,10 +378,12 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_rot_right">
+                                <property name="name">window-rotate-right</property>
                                 <property name="label" translatable="yes">↷</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
