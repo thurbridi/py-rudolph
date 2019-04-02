@@ -1,9 +1,12 @@
+import numpy as np
+from functools import partial
+
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
+
 from gi.repository import Gtk, Gdk
-from graphics import Point, Line, Polygon, Vec2, Rect
-import numpy as np
+from graphics import Point, Line, Polygon, Vec2, Rect, offset
 
 
 NB_PAGES = {
@@ -179,6 +182,21 @@ class MainWindowHandler:
             self.world_window.max *= 1.1
 
         widget.queue_draw()
+
+    def on_press_direction(self, widget):
+        print(f'pressou {widget.get_name()}')
+
+        CALLBACKS = {
+            'window-move-left': partial(offset, self.world_window, [-10, 0]),
+            'window-move-right': partial(offset, self.world_window, [10, 0]),
+            'window-move-up': partial(offset, self.world_window, [0, -10]),
+            'window-move-down': partial(offset, self.world_window, [0, 10]),
+            'window-center-view': partial(offset, self.world_window, -self.world_window.min),
+        }
+
+        CALLBACKS[widget.get_name()]()
+
+        self.window.queue_draw()
 
 
 class MainWindow(Gtk.ApplicationWindow):

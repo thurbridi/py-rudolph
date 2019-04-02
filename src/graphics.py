@@ -48,6 +48,12 @@ class Rect():
         return self.ymax - self.ymin
 
 
+def offset(rect: Rect, offset: Vec2):
+    print(f'offset: {rect.min} -> {rect.min + offset}')
+    rect.min += offset
+    rect.max += offset
+
+
 class Viewport(NamedTuple):
     min: Vec2
     max: Vec2
@@ -66,6 +72,7 @@ class Viewport(NamedTuple):
             self.window.max.x - self.window.min.x,
             self.window.max.y - self.window.min.y
         )
+
         return Vec2(
             (p.x - self.min.x) * view_size.x / win_size.x,
             (p.y - self.min.y) * view_size.y / win_size.y,

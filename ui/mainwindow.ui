@@ -280,10 +280,12 @@
                             <property name="column_homogeneous">True</property>
                             <child>
                               <object class="GtkButton" id="btn_up">
+                                <property name="name">window-move-up</property>
                                 <property name="label" translatable="yes">Up</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -292,10 +294,12 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_left">
+                                <property name="name">window-move-left</property>
                                 <property name="label" translatable="yes">Left</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -304,10 +308,12 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_right">
+                                <property name="name">window-move-right</property>
                                 <property name="label" translatable="yes">Right</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -316,10 +322,12 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_down">
+                                <property name="name">window-move-down</property>
                                 <property name="label" translatable="yes">Down</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -376,10 +384,12 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_center_view">
+                                <property name="name">window-center-view</property>
                                 <property name="label" translatable="yes">Origin</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
