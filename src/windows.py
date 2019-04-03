@@ -184,15 +184,18 @@ class MainWindowHandler:
 
     def on_press_direction(self, widget):
         CALLBACKS = {
-            'window-move-left': partial(self.world_window.offset, [-10, 0]),
-            'window-move-right': partial(self.world_window.offset, [10, 0]),
-            'window-move-up': partial(self.world_window.offset, [0, -10]),
-            'window-move-down': partial(self.world_window.offset, [0, 10]),
-            'window-center-view': partial(self.world_window.offset, -self.world_window.min),
-            'window-rotate-left': partial(self.world_window.rotate, -10),
-            'window-rotate-right': partial(self.world_window.rotate, 10),
-            'window-zoom-in': partial(self.world_window.zoom, 0.9),
-            'window-zoom-out': partial(self.world_window.zoom, 1.1),
+            'nav-move-left': partial(self.selected_obj.offset, [-10, 0]),
+            'nav-move-right': partial(self.selected_obj.offset, [10, 0]),
+            'nav-move-up': partial(self.selected_obj.offset, [0, -10]),
+            'nav-move-down': partial(self.selected_obj.offset, [0, 10]),
+            'nav-center-view': partial(
+                self.selected_obj.offset,
+                -self.selected_obj.min
+            ),
+            'nav-rotate-left': partial(self.selected_obj.rotate, -10),
+            'nav-rotate-right': partial(self.selected_obj.rotate, 10),
+            'nav-zoom-in': partial(self.selected_obj.zoom, 0.9),
+            'nav-zoom-out': partial(self.selected_obj.zoom, 1.1),
         }
 
         CALLBACKS[widget.get_name()]()

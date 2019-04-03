@@ -280,7 +280,7 @@
                             <property name="column_homogeneous">True</property>
                             <child>
                               <object class="GtkButton" id="btn_up">
-                                <property name="name">window-move-up</property>
+                                <property name="name">nav-move-up</property>
                                 <property name="label" translatable="yes">Up</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -294,7 +294,7 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_left">
-                                <property name="name">window-move-left</property>
+                                <property name="name">nav-move-left</property>
                                 <property name="label" translatable="yes">Left</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -308,7 +308,7 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_right">
-                                <property name="name">window-move-right</property>
+                                <property name="name">nav-move-right</property>
                                 <property name="label" translatable="yes">Right</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -322,7 +322,7 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_down">
-                                <property name="name">window-move-down</property>
+                                <property name="name">nav-move-down</property>
                                 <property name="label" translatable="yes">Down</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -336,7 +336,7 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_in">
-                                <property name="name">window-zoom-in</property>
+                                <property name="name">nav-zoom-in</property>
                                 <property name="label" translatable="yes">+</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -350,7 +350,7 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_out">
-                                <property name="name">window-zoom-out</property>
+                                <property name="name">nav-zoom-out</property>
                                 <property name="label" translatable="yes">-</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -364,7 +364,7 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_rot_left">
-                                <property name="name">window-rotate-left</property>
+                                <property name="name">nav-rotate-left</property>
                                 <property name="label" translatable="yes">↶</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -378,7 +378,7 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_rot_right">
-                                <property name="name">window-rotate-right</property>
+                                <property name="name">nav-rotate-right</property>
                                 <property name="label" translatable="yes">↷</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -392,7 +392,7 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_center_view">
-                                <property name="name">window-center-view</property>
+                                <property name="name">nav-center-view</property>
                                 <property name="label" translatable="yes">Origin</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
