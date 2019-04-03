@@ -4,7 +4,24 @@ import numpy as np
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from math import cos, sin, radians
-from typing import NamedTuple
+
+
+class Vec3(np.ndarray):
+    def __new__(cls, x: float, y: float, z: float):
+        obj = np.asarray([x, y, z]).view(cls)
+        return obj
+
+    @property
+    def x(self) -> float:
+        return self[0]
+
+    @property
+    def y(self) -> float:
+        return self[1]
+
+    @property
+    def z(self) -> float:
+        return self[2]
 
 
 class Vec2(np.ndarray):
@@ -19,6 +36,9 @@ class Vec2(np.ndarray):
     @property
     def y(self) -> float:
         return self[1]
+
+    def homogenize(self) -> Vec3:
+        return Vec3(self.x, self.y, 1)
 
 
 class Rect():
