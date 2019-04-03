@@ -8,7 +8,7 @@ from typing import NamedTuple
 
 
 class Vec2(np.ndarray):
-    def __new__(cls, x: int, y: int):
+    def __new__(cls, x: float, y: float):
         obj = np.asarray([x, y]).view(cls)
         return obj
 
