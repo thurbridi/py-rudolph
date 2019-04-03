@@ -1,21 +1,24 @@
+import numpy as np
+from functools import partial
+
 import gi
 gi.require_version('Gtk', '3.0')
-gi.require_foreign("cairo")
+gi.require_foreign('cairo')
+
 from gi.repository import Gtk, Gdk
 from graphics import Point, Line, Polygon, Vec2, Rect
-import numpy as np
 
 
 NB_PAGES = {
-    0: "point",
-    1: "line",
-    2: "polygon"
+    0: 'point',
+    1: 'line',
+    2: 'polygon'
 }
 
 BUTTON_EVENTS = {
-    1: "left",
-    2: "middle",
-    3: "right",
+    1: 'left',
+    2: 'middle',
+    3: 'right',
 }
 
 
@@ -26,23 +29,23 @@ class NewObjectDialogHandler:
         self.vertices = []
 
     def on_ok(self, widget):
-        window = self.builder.get_object("new_object_window")
-        notebook = self.builder.get_object("notebook1")
+        window = self.builder.get_object('new_object_window')
+        notebook = self.builder.get_object('notebook1')
 
         page_num = notebook.get_current_page()
 
-        name = self.builder.get_object("entry_name").get_text()
-        if NB_PAGES[page_num] == "point":
-            x = float(self.builder.get_object("entryX").get_text())
-            y = float(self.builder.get_object("entryY").get_text())
+        name = self.builder.get_object('entry_name').get_text()
+        if NB_PAGES[page_num] == 'point':
+            x = float(self.builder.get_object('entryX').get_text())
+            y = float(self.builder.get_object('entryY').get_text())
 
             self.dialog.new_object = Point(Vec2(x, y), name=name)
 
-        elif NB_PAGES[page_num] == "line":
-            y2 = float(self.builder.get_object("entryY2").get_text())
-            x1 = float(self.builder.get_object("entryX1").get_text())
-            y1 = float(self.builder.get_object("entryY1").get_text())
-            x2 = float(self.builder.get_object("entryX2").get_text())
+        elif NB_PAGES[page_num] == 'line':
+            y2 = float(self.builder.get_object('entryY2').get_text())
+            x1 = float(self.builder.get_object('entryX1').get_text())
+            y1 = float(self.builder.get_object('entryY1').get_text())
+            x2 = float(self.builder.get_object('entryX2').get_text())
 
             self.dialog.new_object = Line(
                 Vec2(x1, y1),
@@ -50,23 +53,23 @@ class NewObjectDialogHandler:
                 name=name
             )
 
-        elif NB_PAGES[page_num] == "polygon":
+        elif NB_PAGES[page_num] == 'polygon':
             if len(self.vertices) >= 3:
                 self.dialog.new_object = Polygon(self.vertices, name=name)
         else:
-            raise ValueError("No page with given index.")
+            raise ValueError('No page with given index.')
 
         window.destroy()
 
     def on_cancel(self, widget):
-        window = self.builder.get_object("new_object_window")
+        window = self.builder.get_object('new_object_window')
         window.destroy()
 
     def on_add_point(self, widget):
-        vertice_store = self.builder.get_object("vertice_store")
+        vertice_store = self.builder.get_object('vertice_store')
 
-        x = float(self.builder.get_object("entryX3").get_text())
-        y = float(self.builder.get_object("entryY3").get_text())
+        x = float(self.builder.get_object('entryX3').get_text())
+        y = float(self.builder.get_object('entryY3').get_text())
 
         vertice_store.append([x, y, 1])
         self.vertices.append(Vec2(x, y))
@@ -76,20 +79,20 @@ class NewObjectDialog(Gtk.Dialog):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
-        self.builder = Gtk.Builder.new_from_file("ui/newobjectdialog.ui")
+        self.builder = Gtk.Builder.new_from_file('ui/newobjectdialog.ui')
         self.builder.connect_signals(
             NewObjectDialogHandler(self, self.builder)
         )
         self.new_object = None
 
-        self.dialog_window = self.builder.get_object("new_object_window")
+        self.dialog_window = self.builder.get_object('new_object_window')
 
 
 class MainWindowHandler:
     def __init__(self, builder):
         self.builder = builder
-        self.window = self.builder.get_object("main_window")
-        self.object_store = self.builder.get_object("object_store")
+        self.window = self.builder.get_object('main_window')
+        self.object_store = self.builder.get_object('object_store')
         self.display_file = []
         self.world_window = Rect(
             Vec2(0, 0),
@@ -98,10 +101,9 @@ class MainWindowHandler:
         self.press_start = None
 
     def on_destroy(self, *args):
-        Gtk.main_quit()
+        self.window.get_application().quit()
 
     def on_draw(self, widget, cr):
-        print(f"{len(self.display_file)} objects to draw")
         vp_w = widget.get_allocated_width()
         vp_h = widget.get_allocated_height()
 
@@ -128,13 +130,13 @@ class MainWindowHandler:
             self.display_file.append(dialog.new_object)
             self.object_store.append([
                 dialog.new_object.name,
-                str(f"<{type(dialog.new_object).__name__}>")
+                str(f'<{type(dialog.new_object).__name__}>')
             ])
 
-            self.builder.get_object("drawing_area").queue_draw()
+            self.builder.get_object('drawing_area').queue_draw()
 
         elif response == Gtk.ResponseType.CLOSE:
-            print("CANCEL")
+            print('CANCEL')
 
     def on_quit(self, widget):
         self.window.close()
@@ -142,9 +144,9 @@ class MainWindowHandler:
     def on_about(self, widget):
         about_dialog = Gtk.AboutDialog(
             None,
-            authors=["Arthur Bridi Guazzelli", "João Paulo T. I. Z."],
-            version="1.0.0",
-            program_name="Rudolph"
+            authors=['Arthur Bridi Guazzelli', 'João Paulo T. I. Z.'],
+            version='1.0.0',
+            program_name='Rudolph'
         )
         about_dialog.run()
 
@@ -180,13 +182,30 @@ class MainWindowHandler:
 
         widget.queue_draw()
 
+    def on_press_direction(self, widget):
+        CALLBACKS = {
+            'window-move-left'    : partial(self.world_window.offset, [-10, 0]),
+            'window-move-right'   : partial(self.world_window.offset, [10, 0]),
+            'window-move-up'      : partial(self.world_window.offset, [0, -10]),
+            'window-move-down'    : partial(self.world_window.offset, [0, 10]),
+            'window-center-view'  : partial(self.world_window.offset, -self.world_window.min),
+            'window-rotate-left'  : partial(self.world_window.rotate, -10),
+            'window-rotate-right' : partial(self.world_window.rotate, 10),
+            'window-zoom-in'      : partial(self.world_window.zoom, 0.9),
+            'window-zoom-out'     : partial(self.world_window.zoom, 1.1),
+        }
+
+        CALLBACKS[widget.get_name()]()
+
+        self.window.queue_draw()
+
 
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        builder = Gtk.Builder.new_from_file("ui/mainwindow.ui")
+        builder = Gtk.Builder.new_from_file('ui/mainwindow.ui')
 
-        self.window = builder.get_object("main_window")
+        self.window = builder.get_object('main_window')
 
         builder.connect_signals(MainWindowHandler(builder))
