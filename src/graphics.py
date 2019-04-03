@@ -1,6 +1,7 @@
 '''Contains displayable object definitions.'''
 import cairo
 import numpy as np
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from math import cos, sin, radians

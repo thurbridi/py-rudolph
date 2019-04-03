@@ -1,11 +1,13 @@
 from functools import partial
 
 import gi
+import numpy as np
+from gi.repository import Gtk, Gdk
+
+from graphics import Point, Line, Polygon, Vec2, Rect
+
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
-
-from gi.repository import Gtk, Gdk
-from graphics import Point, Line, Polygon, Vec2, Rect
 
 
 NB_PAGES = {
@@ -103,6 +105,12 @@ class MainWindowHandler:
         self.window.get_application().quit()
 
     def on_draw(self, widget, cr):
+        def window_to_viewport(v: Vec2):
+            return Vec2(
+                ((v.x - self.world_window.min.x) / window_w) * vp_w,
+                (1 - ((v.y - self.world_window.min.y) / window_h)) * vp_h
+            )
+
         vp_w = widget.get_allocated_width()
         vp_h = widget.get_allocated_height()
 
@@ -114,13 +122,7 @@ class MainWindowHandler:
         window_h = self.world_window.height
 
         for object in self.display_file:
-            object.draw(
-                cr,
-                lambda v: Vec2(
-                    ((v.x - self.world_window.min.x) / window_w) * vp_w,
-                    (1 - ((v.y - self.world_window.min.y) / window_h)) * vp_h
-                )
-            )
+            object.draw(cr, window_to_viewport)
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
