@@ -1,4 +1,3 @@
-import numpy as np
 from functools import partial
 
 import gi
@@ -114,13 +113,14 @@ class MainWindowHandler:
         window_w = self.world_window.width
         window_h = self.world_window.height
 
-        transform = lambda v: Vec2(
-            ((v.x - self.world_window.xmin) / window_w) * vp_w,
-            (1 - ((v.y - self.world_window.ymin) / window_h)) * vp_h
-        )
-
         for object in self.display_file:
-            object.draw(cr, transform)
+            object.draw(
+                cr,
+                lambda v: Vec2(
+                    ((v.x - self.world_window.min.x) / window_w) * vp_w,
+                    (1 - ((v.y - self.world_window.min.y) / window_h)) * vp_h
+                )
+            )
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
@@ -153,14 +153,14 @@ class MainWindowHandler:
     def on_button_press(self, widget, event):
         if BUTTON_EVENTS[event.button] == 'left':
             # register x, y
-            self.press_start = np.array([-event.x, event.y], dtype=float)
+            self.press_start = Vec2(-event.x, event.y)
             self.dragging = True
 
     def on_motion(self, widget, event):
         # register x, y
         # translate window
         if self.dragging:
-            current = np.array([-event.x, event.y], dtype=float)
+            current = Vec2(-event.x, event.y)
             delta = current - self.press_start
             self.press_start = current
             self.world_window.min += delta
@@ -184,15 +184,15 @@ class MainWindowHandler:
 
     def on_press_direction(self, widget):
         CALLBACKS = {
-            'window-move-left'    : partial(self.world_window.offset, [-10, 0]),
-            'window-move-right'   : partial(self.world_window.offset, [10, 0]),
-            'window-move-up'      : partial(self.world_window.offset, [0, -10]),
-            'window-move-down'    : partial(self.world_window.offset, [0, 10]),
-            'window-center-view'  : partial(self.world_window.offset, -self.world_window.min),
-            'window-rotate-left'  : partial(self.world_window.rotate, -10),
-            'window-rotate-right' : partial(self.world_window.rotate, 10),
-            'window-zoom-in'      : partial(self.world_window.zoom, 0.9),
-            'window-zoom-out'     : partial(self.world_window.zoom, 1.1),
+            'window-move-left': partial(self.world_window.offset, [-10, 0]),
+            'window-move-right': partial(self.world_window.offset, [10, 0]),
+            'window-move-up': partial(self.world_window.offset, [0, -10]),
+            'window-move-down': partial(self.world_window.offset, [0, 10]),
+            'window-center-view': partial(self.world_window.offset, -self.world_window.min),
+            'window-rotate-left': partial(self.world_window.rotate, -10),
+            'window-rotate-right': partial(self.world_window.rotate, 10),
+            'window-zoom-in': partial(self.world_window.zoom, 0.9),
+            'window-zoom-out': partial(self.world_window.zoom, 1.1),
         }
 
         CALLBACKS[widget.get_name()]()

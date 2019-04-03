@@ -8,7 +8,7 @@ from math import cos, sin, radians
 
 class Vec3(np.ndarray):
     def __new__(cls, x: float, y: float, z: float):
-        obj = np.asarray([x, y, z]).view(cls)
+        obj = np.asarray([x, y, z], dtype=float).view(cls)
         return obj
 
     @property
@@ -26,7 +26,7 @@ class Vec3(np.ndarray):
 
 class Vec2(np.ndarray):
     def __new__(cls, x: float, y: float):
-        obj = np.asarray([x, y]).view(cls)
+        obj = np.asarray([x, y], dtype=float).view(cls)
         return obj
 
     @property
@@ -41,34 +41,18 @@ class Vec2(np.ndarray):
         return Vec3(self.x, self.y, 1)
 
 
+@dataclass
 class Rect():
-    def __init__(self, min, max):
-        self.min = np.array(min, dtype=float)
-        self.max = np.array(max, dtype=float)
-
-    @property
-    def xmin(self):
-        return self.min[0]
-
-    @property
-    def ymin(self):
-        return self.min[1]
-
-    @property
-    def xmax(self):
-        return self.max[0]
-
-    @property
-    def ymax(self):
-        return self.max[1]
+    min: Vec2
+    max: Vec2
 
     @property
     def width(self):
-        return self.xmax - self.xmin
+        return self.max.x - self.min.x
 
     @property
     def height(self):
-        return self.ymax - self.ymin
+        return self.max.y - self.min.y
 
     def offset(self, offset: Vec2):
         self.min += offset
@@ -115,7 +99,6 @@ class Viewport:
         )
 
 
-
 class GraphicObject(ABC):
     def __init__(self, name=''):
         super().__init__()
@@ -130,7 +113,7 @@ class Point(GraphicObject):
     def __init__(self, pos: Vec2, name=''):
         super().__init__(name)
 
-        self.pos = np.array(pos, dtype=float)
+        self.pos = pos
 
     @property
     def x(self) -> float:
