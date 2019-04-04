@@ -107,11 +107,12 @@ class MainWindowHandler:
         )
         self.press_start = None
         self.old_size = self.window.get_allocation()
+        print(f'initial size: {self.old_size}')
 
     def on_destroy(self, *args):
         self.window.get_application().quit()
 
-    def on_resize(self):
+    def on_resize(self, widget: Gtk.Widget):
         new_size =  self.window.get_allocation()
 
         old_w, old_h = self.old_size.width, self.old_size.height
@@ -119,8 +120,19 @@ class MainWindowHandler:
 
         ratio = Vec2(new_w / old_w, new_h / old_h)
 
-        self.world_window.max.x *= ratio.x
-        self.world_window.max.y *= ratio.y
+        _max = self.world_window.max
+        self.world_window.max = Vec2(_max.x * ratio.x, _max.y * ratio.y)
+
+        # FIXME: Actually not resizing at all because bugs :)
+        self.world_window.max = Vec2(new_w, new_h)
+
+        self.old_size = new_size
+
+        print(
+            f'new ratio: {ratio}\n'
+            f'    -> min: {self.world_window.min}\n'
+            f'    -> max: {self.world_window.max}\n'
+        )
 
     def on_draw(self, widget, cr):
         def window_to_viewport(v: Vec2):
@@ -228,6 +240,9 @@ class MainWindowHandler:
             obj.name,
             str(f'<{type(obj).__name__}>')
         ])
+
+    def on_toggle_fixed_window(self, widget: Gtk.ToggleButton):
+        pass
 
 
 class MainWindow(Gtk.ApplicationWindow):

@@ -22,8 +22,8 @@
   </object>
   <object class="GtkApplicationWindow" id="main_window">
     <property name="can_focus">False</property>
-    <signal name="destroy" handler="on_destroy" swapped="no"/>
     <signal name="check-resize" handler="on_resize" swapped="no"/>
+    <signal name="destroy" handler="on_destroy" swapped="no"/>
     <child>
       <placeholder/>
     </child>
@@ -281,8 +281,8 @@
                             <property name="column_homogeneous">True</property>
                             <child>
                               <object class="GtkButton" id="btn_up">
-                                <property name="name">nav-move-up</property>
                                 <property name="label" translatable="yes">Up</property>
+                                <property name="name">nav-move-up</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -295,8 +295,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_left">
-                                <property name="name">nav-move-left</property>
                                 <property name="label" translatable="yes">Left</property>
+                                <property name="name">nav-move-left</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -309,8 +309,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_right">
-                                <property name="name">nav-move-right</property>
                                 <property name="label" translatable="yes">Right</property>
+                                <property name="name">nav-move-right</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -323,8 +323,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_down">
-                                <property name="name">nav-move-down</property>
                                 <property name="label" translatable="yes">Down</property>
+                                <property name="name">nav-move-down</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -337,8 +337,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_in">
-                                <property name="name">nav-zoom-in</property>
                                 <property name="label" translatable="yes">+</property>
+                                <property name="name">nav-zoom-in</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -351,8 +351,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_out">
-                                <property name="name">nav-zoom-out</property>
                                 <property name="label" translatable="yes">-</property>
+                                <property name="name">nav-zoom-out</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -365,8 +365,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_rot_left">
-                                <property name="name">nav-rotate-left</property>
                                 <property name="label" translatable="yes">↶</property>
+                                <property name="name">nav-rotate-left</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -379,8 +379,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_rot_right">
-                                <property name="name">nav-rotate-right</property>
                                 <property name="label" translatable="yes">↷</property>
+                                <property name="name">nav-rotate-right</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -393,8 +393,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_center_view">
-                                <property name="name">nav-center-view</property>
                                 <property name="label" translatable="yes">Origin</property>
+                                <property name="name">nav-center-view</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -456,14 +456,13 @@
                             <property name="has_default">True</property>
                             <property name="spacing">8</property>
                             <child>
-                              <object class="GtkEntry" id="window-width">
-                                <property name="width_request">-1</property>
+                              <object class="GtkCheckButton" id="check-fixed-window">
+                                <property name="label" translatable="yes">Fixed</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="max_length">40</property>
-                                <property name="width_chars">14</property>
-                                <property name="max_width_chars">4</property>
-                                <property name="placeholder_text" translatable="yes">width (px)</property>
+                                <property name="receives_default">False</property>
+                                <property name="draw_indicator">True</property>
+                                <signal name="toggled" handler="on_toggle_fixed_window" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -472,16 +471,34 @@
                               </packing>
                             </child>
                             <child>
+                              <object class="GtkEntry" id="window-width">
+                                <property name="width_request">-1</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="editable">False</property>
+                                <property name="max_length">40</property>
+                                <property name="width_chars">14</property>
+                                <property name="max_width_chars">4</property>
+                                <property name="placeholder_text" translatable="yes">width (px)</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child>
                               <object class="GtkEntry" id="window-height">
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="editable">False</property>
                                 <property name="width_chars">14</property>
                                 <property name="placeholder_text" translatable="yes">height (px)</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">True</property>
-                                <property name="position">1</property>
+                                <property name="position">2</property>
                               </packing>
                             </child>
                           </object>
