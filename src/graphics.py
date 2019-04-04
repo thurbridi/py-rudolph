@@ -8,7 +8,7 @@ from math import cos, sin, radians
 
 class Vec3(np.ndarray):
     def __new__(cls, x: float, y: float, z: float):
-        obj = np.asarray([x, y, z], dtype=float).view(cls)
+        obj = np.asarray([x, y, z, 1], dtype=float).view(cls)
         return obj
 
     @property
@@ -26,7 +26,7 @@ class Vec3(np.ndarray):
 
 class Vec2(np.ndarray):
     def __new__(cls, x: float, y: float):
-        obj = np.asarray([x, y], dtype=float).view(cls)
+        obj = np.asarray([x, y, 1], dtype=float).view(cls)
         return obj
 
     @property
