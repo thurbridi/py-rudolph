@@ -97,10 +97,14 @@ class MainWindowHandler:
             Vec2(0, 0),
             Vec2(600, 300)
         )
+        self.output_buffer = self.builder.get_object('outputbuffer')
         self.press_start = None
 
     def on_destroy(self, *args):
         self.window.get_application().quit()
+
+    def log(self, msg: str):
+        self.output_buffer.insert_at_cursor(f'{msg}\n')
 
     def on_draw(self, widget, cr):
         vp_w = widget.get_allocated_width()
@@ -127,16 +131,15 @@ class MainWindowHandler:
         response = dialog.dialog_window.run()
 
         if response == Gtk.ResponseType.OK:
-            self.display_file.append(dialog.new_object)
-            self.object_store.append([
-                dialog.new_object.name,
-                str(f'<{type(dialog.new_object).__name__}>')
-            ])
+            if dialog.new_object is not None:
+                self.log(f"Object added: <{type(dialog.new_object).__name__}>")
+                self.display_file.append(dialog.new_object)
+                self.object_store.append([
+                    dialog.new_object.name,
+                    str(f'<{type(dialog.new_object).__name__}>')
+                ])
 
-            self.builder.get_object('drawing_area').queue_draw()
-
-        elif response == Gtk.ResponseType.CLOSE:
-            print('CANCEL')
+                self.builder.get_object('drawing_area').queue_draw()
 
     def on_quit(self, widget):
         self.window.close()
@@ -188,7 +191,9 @@ class MainWindowHandler:
             'window-move-right': partial(self.world_window.offset, [10, 0]),
             'window-move-up': partial(self.world_window.offset, [0, -10]),
             'window-move-down': partial(self.world_window.offset, [0, 10]),
-            'window-center-view': partial(self.world_window.offset, -self.world_window.min),
+            'window-center-view': partial(
+                self.world_window.offset,
+                -self.world_window.min),
             'window-rotate-left': partial(self.world_window.rotate, -10),
             'window-rotate-right': partial(self.world_window.rotate, 10),
             'window-zoom-in': partial(self.world_window.zoom, 0.9),

@@ -280,8 +280,8 @@
                             <property name="column_homogeneous">True</property>
                             <child>
                               <object class="GtkButton" id="btn_up">
-                                <property name="name">window-move-up</property>
                                 <property name="label" translatable="yes">Up</property>
+                                <property name="name">window-move-up</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -294,8 +294,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_left">
-                                <property name="name">window-move-left</property>
                                 <property name="label" translatable="yes">Left</property>
+                                <property name="name">window-move-left</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -308,8 +308,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_right">
-                                <property name="name">window-move-right</property>
                                 <property name="label" translatable="yes">Right</property>
+                                <property name="name">window-move-right</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -322,8 +322,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_down">
-                                <property name="name">window-move-down</property>
                                 <property name="label" translatable="yes">Down</property>
+                                <property name="name">window-move-down</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -336,8 +336,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_in">
-                                <property name="name">window-zoom-in</property>
                                 <property name="label" translatable="yes">+</property>
+                                <property name="name">window-zoom-in</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -350,8 +350,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_out">
-                                <property name="name">window-zoom-out</property>
                                 <property name="label" translatable="yes">-</property>
+                                <property name="name">window-zoom-out</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -364,8 +364,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_rot_left">
-                                <property name="name">window-rotate-left</property>
                                 <property name="label" translatable="yes">↶</property>
+                                <property name="name">window-rotate-left</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -378,8 +378,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_rot_right">
-                                <property name="name">window-rotate-right</property>
                                 <property name="label" translatable="yes">↷</property>
+                                <property name="name">window-rotate-right</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -392,8 +392,8 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="btn_center_view">
-                                <property name="name">window-center-view</property>
                                 <property name="label" translatable="yes">Origin</property>
+                                <property name="name">window-center-view</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -543,17 +543,29 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkTextView" id="output">
-                    <property name="height_request">40</property>
+                  <object class="GtkScrolledWindow" id="output_scrollbar">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="editable">False</property>
-                    <property name="wrap_mode">word</property>
-                    <property name="monospace">True</property>
+                    <property name="valign">start</property>
+                    <property name="vscrollbar_policy">always</property>
+                    <property name="window_placement">bottom-left</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkTextView" id="output">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="hscroll_policy">natural</property>
+                        <property name="vscroll_policy">natural</property>
+                        <property name="wrap_mode">word</property>
+                        <property name="left_margin">4</property>
+                        <property name="buffer">outputbuffer</property>
+                        <property name="monospace">True</property>
+                      </object>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="fill">True</property>
+                    <property name="fill">False</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
@@ -566,7 +578,7 @@
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="fill">True</property>
+                    <property name="fill">False</property>
                     <property name="position">2</property>
                   </packing>
                 </child>
@@ -588,4 +600,5 @@
       </object>
     </child>
   </object>
+  <object class="GtkTextBuffer" id="outputbuffer"/>
 </interface>
