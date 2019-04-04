@@ -106,9 +106,21 @@ class MainWindowHandler:
             Vec2(600, 300)
         )
         self.press_start = None
+        self.old_size = self.window.get_allocation()
 
     def on_destroy(self, *args):
         self.window.get_application().quit()
+
+    def on_resize(self):
+        new_size =  self.window.get_allocation()
+
+        old_w, old_h = self.old_size.width, self.old_size.height
+        new_w, new_h = new_size.width, new_size.height
+
+        ratio = Vec2(new_w / old_w, new_h / old_h)
+
+        self.world_window.max.x *= ratio.x
+        self.world_window.max.y *= ratio.y
 
     def on_draw(self, widget, cr):
         def window_to_viewport(v: Vec2):
