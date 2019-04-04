@@ -135,16 +135,8 @@ class MainWindowHandler:
         response = dialog.dialog_window.run()
 
         if response == Gtk.ResponseType.OK:
-            self.display_file.append(dialog.new_object)
-            self.object_store.append([
-                dialog.new_object.name,
-                str(f'<{type(dialog.new_object).__name__}>')
-            ])
-
-            self.add_object(obj)
-
+            self.add_object(dialog.new_object)
             self.builder.get_object('drawing_area').queue_draw()
-
         elif response == Gtk.ResponseType.CLOSE:
             print('CANCEL')
 
