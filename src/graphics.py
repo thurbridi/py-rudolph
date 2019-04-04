@@ -7,6 +7,41 @@ from dataclasses import dataclass
 from math import cos, sin, radians
 
 
+def make_offset_matrix(x: float, y: float) -> np.ndarray:
+    return np.array(
+        [
+            1, 0, x,
+            0, 1, y,
+            0, 0, 1,
+        ],
+        dtype=float
+    ).reshape(3, 3)
+
+
+def make_scale_matrix(x: float, y: float) -> np.ndarray:
+    return np.array(
+        [
+            x, 0, 0,
+            0, y, 0,
+            0, 0, 1,
+        ],
+        dtype=float
+    ).reshape(3, 3)
+
+
+def make_rotation_matrix(angle: float) -> np.ndarray:
+    angle = radians(angle)
+
+    return np.array(
+        [
+            cos(angle), sin(angle), 0,
+            -sin(angle), cos(angle), 0,
+            0, 0, 1,
+        ],
+        dtype=float
+    ).reshape(3, 3)
+
+
 class Vec3(np.ndarray):
     def __new__(cls, x: float, y: float, z: float):
         obj = np.asarray([x, y, z, 1], dtype=float).view(cls)
@@ -106,6 +141,10 @@ class GraphicObject(ABC):
     def draw(self, cr: cairo.Context, transform):
         pass
 
+    @abstractmethod
+    def transform(self, matrix: np.ndarray):
+        pass
+
 
 class Point(GraphicObject):
     def __init__(self, pos: Vec2, name=''):
@@ -126,6 +165,9 @@ class Point(GraphicObject):
         cr.move_to(coord_vp.x, coord_vp.y)
         cr.arc(coord_vp.x, coord_vp.y, 1, 0, 2 * np.pi)
         cr.fill()
+
+    def transform(self, matrix: np.ndarray):
+        self.pos = matrix @ self.pos
 
 
 class Line(GraphicObject):
@@ -158,6 +200,10 @@ class Line(GraphicObject):
         cr.line_to(coord_vp2.x, coord_vp2.y)
         cr.stroke()
 
+    def transform(self, matrix: np.ndarray):
+        self.points[0] = matrix @ self.points[0]
+        self.points[1] = matrix @ self.points[1]
+
 
 class Polygon(GraphicObject):
     def __init__(self, vertices, name=''):
@@ -178,3 +224,7 @@ class Polygon(GraphicObject):
 
         cr.line_to(start_vp.x, start_vp.y)
         cr.stroke()
+
+    def transform(self, matrix: np.ndarray):
+        for i, vertex in enumerate(self.vertices):
+            self.vertices[i] = matrix @ vertex

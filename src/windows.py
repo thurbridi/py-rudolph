@@ -1,10 +1,18 @@
-from functools import partial
-
 import gi
 import numpy as np
 from gi.repository import Gtk, Gdk
 
-from graphics import Point, Line, Polygon, Vec2, Rect
+from graphics import (
+    make_offset_matrix,
+    make_rotation_matrix,
+    make_scale_matrix,
+    GraphicObject,
+    Line,
+    Point,
+    Polygon,
+    Rect,
+    Vec2,
+)
 
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
@@ -34,14 +42,13 @@ class NewObjectDialogHandler:
         notebook = self.builder.get_object('notebook1')
 
         page_num = notebook.get_current_page()
-
         name = self.builder.get_object('entry_name').get_text()
+
         if NB_PAGES[page_num] == 'point':
             x = float(self.builder.get_object('entryX').get_text())
             y = float(self.builder.get_object('entryY').get_text())
 
             self.dialog.new_object = Point(Vec2(x, y), name=name)
-
         elif NB_PAGES[page_num] == 'line':
             y2 = float(self.builder.get_object('entryY2').get_text())
             x1 = float(self.builder.get_object('entryX1').get_text())
@@ -53,7 +60,6 @@ class NewObjectDialogHandler:
                 Vec2(x2, y2),
                 name=name
             )
-
         elif NB_PAGES[page_num] == 'polygon':
             if len(self.vertices) >= 3:
                 self.dialog.new_object = Polygon(self.vertices, name=name)
@@ -101,6 +107,10 @@ class MainWindowHandler:
         )
         self.press_start = None
 
+        self.add_object(
+            obj=Point(pos=Vec2(3, 4), name='sample-point'),
+        )
+
     def on_destroy(self, *args):
         self.window.get_application().quit()
 
@@ -134,6 +144,8 @@ class MainWindowHandler:
                 dialog.new_object.name,
                 str(f'<{type(dialog.new_object).__name__}>')
             ])
+
+            self.add_object(obj)
 
             self.builder.get_object('drawing_area').queue_draw()
 
@@ -184,25 +196,38 @@ class MainWindowHandler:
 
         widget.queue_draw()
 
-    def on_press_direction(self, widget):
-        CALLBACKS = {
-            'nav-move-left': partial(self.selected_obj.offset, [-10, 0]),
-            'nav-move-right': partial(self.selected_obj.offset, [10, 0]),
-            'nav-move-up': partial(self.selected_obj.offset, [0, -10]),
-            'nav-move-down': partial(self.selected_obj.offset, [0, 10]),
-            'nav-center-view': partial(
-                self.selected_obj.offset,
-                -self.selected_obj.min
-            ),
-            'nav-rotate-left': partial(self.selected_obj.rotate, -10),
-            'nav-rotate-right': partial(self.selected_obj.rotate, 10),
-            'nav-zoom-in': partial(self.selected_obj.zoom, 0.9),
-            'nav-zoom-out': partial(self.selected_obj.zoom, 1.1),
+    def on_press_navigation_button(self, widget):
+        TRANSFORMATIONS = {
+            'nav-move-up': make_offset_matrix(0, 10),
+            'nav-move-down': make_offset_matrix(0, -10),
+            'nav-move-left': make_offset_matrix(-10, 0),
+            'nav-move-right': make_offset_matrix(10, 0),
+            'nav-rotate-left': make_rotation_matrix(-5),
+            'nav-rotate-right': make_rotation_matrix(5),
+            'nav-zoom-in': make_scale_matrix(1.1, 1.1),
+            'nav-zoom-out': make_scale_matrix(0.9, 0.9),
         }
 
-        CALLBACKS[widget.get_name()]()
+        selected_objs = self.selected_objs
+
+        for obj in selected_objs:
+            obj.transform(matrix=TRANSFORMATIONS[widget.get_name()])
 
         self.window.queue_draw()
+
+    @property
+    def selected_objs(self):
+        tree = self.builder.get_object('tree-displayfiles')
+        store, rows = tree.get_selection().get_selected_rows()
+
+        return (self.display_file[int(str(index))] for index in rows)
+
+    def add_object(self, obj: GraphicObject):
+        self.display_file.append(obj)
+        self.object_store.append([
+            obj.name,
+            str(f'<{type(obj).__name__}>')
+        ])
 
 
 class MainWindow(Gtk.ApplicationWindow):

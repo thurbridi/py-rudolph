@@ -285,7 +285,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
+                                <signal name="clicked" handler="on_press_navigation_button" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -299,7 +299,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
+                                <signal name="clicked" handler="on_press_navigation_button" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -313,7 +313,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
+                                <signal name="clicked" handler="on_press_navigation_button" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -327,7 +327,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
+                                <signal name="clicked" handler="on_press_navigation_button" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -341,7 +341,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
+                                <signal name="clicked" handler="on_press_navigation_button" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">3</property>
@@ -355,7 +355,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
+                                <signal name="clicked" handler="on_press_navigation_button" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">3</property>
@@ -369,7 +369,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
+                                <signal name="clicked" handler="on_press_navigation_button" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -383,7 +383,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
+                                <signal name="clicked" handler="on_press_navigation_button" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -397,7 +397,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <signal name="clicked" handler="on_press_direction" swapped="no"/>
+                                <signal name="clicked" handler="on_press_navigation_button" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
