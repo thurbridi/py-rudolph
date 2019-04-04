@@ -128,6 +128,7 @@ class MainWindowHandler:
 
         self.old_size = new_size
 
+        return
         print(
             f'new ratio: {ratio}\n'
             f'    -> min: {self.world_window.min}\n'
@@ -241,8 +242,15 @@ class MainWindowHandler:
             str(f'<{type(obj).__name__}>')
         ])
 
-    def on_toggle_fixed_window(self, widget: Gtk.ToggleButton):
-        pass
+    def on_toggle_fixed_window(self, checkbox: Gtk.ToggleButton):
+        editable = checkbox.get_active()
+        for widget_id in ['window-width', 'window-height']:
+            widget = self.builder.get_object(widget_id)
+            widget.set_editable(editable)
+            widget.set_can_focus(editable)
+
+    def on_change_rotation_ref(self, widget: Gtk.RadioButton):
+        print(widget)
 
 
 class MainWindow(Gtk.ApplicationWindow):

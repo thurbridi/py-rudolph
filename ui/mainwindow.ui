@@ -433,11 +433,138 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="window-contro">
+                  <object class="GtkFrame" id="rotation-ref">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="valign">start</property>
+                    <property name="label_xalign">0.10000000149011612</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkAlignment">
+                        <property name="name">align-rotation-ref</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="top_padding">8</property>
+                        <property name="bottom_padding">8</property>
+                        <property name="left_padding">8</property>
+                        <property name="right_padding">8</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="name">rotation-box</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="orientation">vertical</property>
+                            <child>
+                              <object class="GtkRadioButton" id="radio-rotation-ref-obj-center">
+                                <property name="label" translatable="yes">Object Center</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="active">True</property>
+                                <property name="draw_indicator">True</property>
+                                <signal name="toggled" handler="on_change_rotation_ref" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkRadioButton" id="radio-rotation-ref-origin">
+                                <property name="label" translatable="yes">Origin</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="active">True</property>
+                                <property name="draw_indicator">True</property>
+                                <property name="group">radio-rotation-ref-obj-center</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkBox" id="rotation-ref-absolute-container">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="spacing">8</property>
+                                <property name="homogeneous">True</property>
+                                <child>
+                                  <object class="GtkRadioButton" id="radio-rotation-ref-absolute">
+                                    <property name="label" translatable="yes">Absolute:</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">False</property>
+                                    <property name="active">True</property>
+                                    <property name="draw_indicator">True</property>
+                                    <property name="group">radio-rotation-ref-obj-center</property>
+                                    <signal name="toggled" handler="on_change_rotation_ref" swapped="no"/>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="editable">False</property>
+                                    <property name="width_chars">4</property>
+                                    <property name="placeholder_text" translatable="yes">x (px)</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="editable">False</property>
+                                    <property name="width_chars">4</property>
+                                    <property name="placeholder_text" translatable="yes">y (px)</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">2</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child type="label">
+                      <object class="GtkLabel" id="rotation-ref-label">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Rotation Reference</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkFrame" id="window-control">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <property name="label_xalign">0.10000000149011612</property>
                     <property name="shadow_type">in</property>
                     <child>
@@ -458,6 +585,7 @@
                             <child>
                               <object class="GtkCheckButton" id="check-fixed-window">
                                 <property name="label" translatable="yes">Fixed</property>
+                                <property name="width_request">64</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
@@ -472,13 +600,13 @@
                             </child>
                             <child>
                               <object class="GtkEntry" id="window-width">
-                                <property name="width_request">-1</property>
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can_focus">True</property>
                                 <property name="editable">False</property>
-                                <property name="max_length">40</property>
-                                <property name="width_chars">14</property>
+                                <property name="max_length">8</property>
+                                <property name="width_chars">10</property>
                                 <property name="max_width_chars">4</property>
+                                <property name="caps_lock_warning">False</property>
                                 <property name="placeholder_text" translatable="yes">width (px)</property>
                               </object>
                               <packing>
@@ -490,9 +618,9 @@
                             <child>
                               <object class="GtkEntry" id="window-height">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can_focus">True</property>
                                 <property name="editable">False</property>
-                                <property name="width_chars">14</property>
+                                <property name="width_chars">10</property>
                                 <property name="placeholder_text" translatable="yes">height (px)</property>
                               </object>
                               <packing>
@@ -506,7 +634,7 @@
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="window-control">
+                      <object class="GtkLabel" id="window-control-label">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Window</property>
@@ -516,7 +644,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">2</property>
+                    <property name="position">3</property>
                   </packing>
                 </child>
               </object>
