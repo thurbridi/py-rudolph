@@ -37,9 +37,6 @@ class Vec2(np.ndarray):
     def y(self) -> float:
         return self[1]
 
-    def homogenize(self) -> Vec3:
-        return Vec3(self.x, self.y, 1)
-
 
 @dataclass
 class Rect():
