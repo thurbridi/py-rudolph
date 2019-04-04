@@ -456,6 +456,7 @@
                             <child>
                               <object class="GtkRadioButton" id="radio-rotation-ref-obj-center">
                                 <property name="label" translatable="yes">Object Center</property>
+                                <property name="name">rotate-ref-obj-center</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
@@ -472,6 +473,7 @@
                             <child>
                               <object class="GtkRadioButton" id="radio-rotation-ref-origin">
                                 <property name="label" translatable="yes">Origin</property>
+                                <property name="name">rotate-ref-origin</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
@@ -494,6 +496,7 @@
                                 <child>
                                   <object class="GtkRadioButton" id="radio-rotation-ref-absolute">
                                     <property name="label" translatable="yes">Absolute:</property>
+                                    <property name="name">rotate-ref-abs</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
@@ -509,7 +512,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkEntry">
+                                  <object class="GtkEntry" id="rotation-ref-x">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="editable">False</property>
@@ -523,7 +526,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkEntry">
+                                  <object class="GtkEntry" id="rotation-ref-y">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="editable">False</property>
@@ -608,6 +611,7 @@
                                 <property name="max_width_chars">4</property>
                                 <property name="caps_lock_warning">False</property>
                                 <property name="placeholder_text" translatable="yes">width (px)</property>
+                                <property name="input_purpose">number</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -622,6 +626,7 @@
                                 <property name="editable">False</property>
                                 <property name="width_chars">10</property>
                                 <property name="placeholder_text" translatable="yes">height (px)</property>
+                                <property name="input_purpose">number</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>

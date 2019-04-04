@@ -7,6 +7,38 @@ from dataclasses import dataclass
 from math import cos, sin, radians
 
 
+class Vec2(np.ndarray):
+    def __new__(cls, x: float = 0, y: float = 0):
+        obj = np.asarray([x, y, 1], dtype=float).view(cls)
+        return obj
+
+    @property
+    def x(self) -> float:
+        return self[0]
+
+    @property
+    def y(self) -> float:
+        return self[1]
+
+
+class Vec3(np.ndarray):
+    def __new__(cls, x: float = 0, y: float = 0, z: float = 0):
+        obj = np.asarray([x, y, z, 1], dtype=float).view(cls)
+        return obj
+
+    @property
+    def x(self) -> float:
+        return self[0]
+
+    @property
+    def y(self) -> float:
+        return self[1]
+
+    @property
+    def z(self) -> float:
+        return self[2]
+
+
 def make_offset_matrix(x: float, y: float) -> np.ndarray:
     return np.array(
         [
@@ -29,10 +61,10 @@ def make_scale_matrix(x: float, y: float) -> np.ndarray:
     ).reshape(3, 3)
 
 
-def make_rotation_matrix(angle: float) -> np.ndarray:
+def make_rotation_matrix(angle: float, ref: Vec2 = Vec2(0, 0)) -> np.ndarray:
     angle = radians(angle)
 
-    return np.array(
+    rot_matrix = np.array(
         [
             cos(angle), sin(angle), 0,
             -sin(angle), cos(angle), 0,
@@ -41,37 +73,11 @@ def make_rotation_matrix(angle: float) -> np.ndarray:
         dtype=float
     ).reshape(3, 3)
 
-
-class Vec3(np.ndarray):
-    def __new__(cls, x: float, y: float, z: float):
-        obj = np.asarray([x, y, z, 1], dtype=float).view(cls)
-        return obj
-
-    @property
-    def x(self) -> float:
-        return self[0]
-
-    @property
-    def y(self) -> float:
-        return self[1]
-
-    @property
-    def z(self) -> float:
-        return self[2]
-
-
-class Vec2(np.ndarray):
-    def __new__(cls, x: float, y: float):
-        obj = np.asarray([x, y, 1], dtype=float).view(cls)
-        return obj
-
-    @property
-    def x(self) -> float:
-        return self[0]
-
-    @property
-    def y(self) -> float:
-        return self[1]
+    return (
+        make_offset_matrix(ref.x, ref.y) @
+        rot_matrix @
+        make_offset_matrix(-ref.x, -ref.y)
+    )
 
 
 @dataclass
@@ -228,3 +234,17 @@ class Polygon(GraphicObject):
     def transform(self, matrix: np.ndarray):
         for i, vertex in enumerate(self.vertices):
             self.vertices[i] = matrix @ vertex
+
+    def center(self):
+        first = self.vertices[0]
+        x = [p[0] for p in self.vertices] + [first[0]]
+        y = [p[1] for p in self.vertices] + [first[1]]
+
+        a = 6*sum(x[i]*y[i+1] - x[i+1]*y[i] for i, _ in enumerate(x[:-1]))/2
+
+        cx = sum((x[i] + x[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
+                 for i, _ in enumerate(x[:-1])) / a
+        cy = sum((y[i] + y[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
+                 for i, _ in enumerate(x[:-1])) / a
+
+        return Vec2(cx, cy)

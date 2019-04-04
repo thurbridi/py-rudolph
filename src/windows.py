@@ -1,3 +1,6 @@
+from enum import auto, Enum
+from functools import partial
+
 import gi
 import numpy as np
 from gi.repository import Gtk, Gdk
@@ -29,6 +32,12 @@ BUTTON_EVENTS = {
     2: 'middle',
     3: 'right',
 }
+
+
+class RotationRef(Enum):
+    CENTER = auto()
+    ORIGIN = auto()
+    ABSOLUTE = auto()
 
 
 class NewObjectDialogHandler:
@@ -107,7 +116,11 @@ class MainWindowHandler:
         )
         self.press_start = None
         self.old_size = self.window.get_allocation()
-        print(f'initial size: {self.old_size}')
+        self.rotation_ref = RotationRef.CENTER
+
+        self.add_object(Polygon([
+                Vec2(0, 0), Vec2(0, 50), Vec2(50, 50), Vec2(50, 0),
+            ], name='sqr'))
 
     def on_destroy(self, *args):
         self.window.get_application().quit()
@@ -211,24 +224,38 @@ class MainWindowHandler:
 
     def on_press_navigation_button(self, widget):
         TRANSFORMATIONS = {
-            'nav-move-up': make_offset_matrix(0, 10),
-            'nav-move-down': make_offset_matrix(0, -10),
-            'nav-move-left': make_offset_matrix(-10, 0),
-            'nav-move-right': make_offset_matrix(10, 0),
-            'nav-rotate-left': make_rotation_matrix(-5),
-            'nav-rotate-right': make_rotation_matrix(5),
-            'nav-zoom-in': make_scale_matrix(1.1, 1.1),
-            'nav-zoom-out': make_scale_matrix(0.9, 0.9),
+            'nav-move-up': partial(make_offset_matrix, 0, 10),
+            'nav-move-down': partial(make_offset_matrix, 0, -10),
+            'nav-move-left': partial(make_offset_matrix, -10, 0),
+            'nav-move-right': partial(make_offset_matrix, 10, 0),
+            'nav-rotate-left': partial(self.rotate_selection, -5),
+            'nav-rotate-right': partial(self.rotate_selection, 5),
+            'nav-zoom-in': partial(make_scale_matrix, 1.1, 1.1),
+            'nav-zoom-out': partial(make_scale_matrix, 0.9, 0.9),
         }
 
-        selected_objs = self.selected_objs
-
-        for obj in selected_objs:
-            obj.transform(matrix=TRANSFORMATIONS[widget.get_name()])
+        for obj in self.selected_objs():
+            obj.transform(matrix=TRANSFORMATIONS[widget.get_name()]())
 
         self.window.queue_draw()
 
-    @property
+    def rotate_selection(self, angle: float):
+        try:
+            abs_x = int(self.builder.get_object('rotation-ref-x').get_text())
+            abs_y = int(self.builder.get_object('rotation-ref-y').get_text())
+        except:
+            abs_x = 0
+            abs_y = 0
+
+        for obj in self.selected_objs():
+            offset = {
+                RotationRef.CENTER: obj.center(),
+                RotationRef.ORIGIN: Vec2(0, 0),
+                RotationRef.ABSOLUTE: Vec2(float(abs_x), float(abs_y)),
+            }[self.rotation_ref]
+
+            return make_rotation_matrix(angle, offset)
+
     def selected_objs(self):
         tree = self.builder.get_object('tree-displayfiles')
         store, rows = tree.get_selection().get_selected_rows()
@@ -250,7 +277,16 @@ class MainWindowHandler:
             widget.set_can_focus(editable)
 
     def on_change_rotation_ref(self, widget: Gtk.RadioButton):
-        print(widget)
+        for w in widget.get_group():
+            if w.get_active():
+                self.rotation_ref = {
+                    'rotate-ref-obj-center': RotationRef.CENTER,
+                    'rotate-ref-origin': RotationRef.ORIGIN,
+                    'rotate-ref-abs': RotationRef.ABSOLUTE,
+                }[w.get_name()]
+                if w.get_name() == 'rotate-ref-abs':
+                    self.builder.get_object('rotation-ref-x').set_editable(True)
+                    self.builder.get_object('rotation-ref-y').set_editable(True)
 
 
 class MainWindow(Gtk.ApplicationWindow):
