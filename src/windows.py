@@ -107,10 +107,6 @@ class MainWindowHandler:
         )
         self.press_start = None
 
-        self.add_object(
-            obj=Point(pos=Vec2(3, 4), name='sample-point'),
-        )
-
     def on_destroy(self, *args):
         self.window.get_application().quit()
 
