@@ -118,6 +118,13 @@ class MainWindowHandler:
         self.old_size = self.window.get_allocation()
         self.rotation_ref = RotationRef.CENTER
 
+        self.add_object(Point(Vec2(30, 30), name='point'))
+        self.add_object(Line(Vec2(200, 200), Vec2(100, 150), name='line'))
+        self.add_object(Polygon(
+            [Vec2(400, 400), Vec2(500, 400), Vec2(450, 300)],
+            name='poly'
+        ))
+
     def on_destroy(self, *args):
         self.window.get_application().quit()
 
@@ -253,7 +260,7 @@ class MainWindowHandler:
 
         for obj in self.selected_objs():
             offset = {
-                RotationRef.CENTER: obj.center(),
+                RotationRef.CENTER: obj.geometric_center,
                 RotationRef.ORIGIN: Vec2(0, 0),
                 RotationRef.ABSOLUTE: Vec2(float(abs_x), float(abs_y)),
             }[self.rotation_ref]

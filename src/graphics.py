@@ -230,7 +230,8 @@ class Polygon(GraphicObject):
 
     @property
     def geometric_center(self):
-        return np.sum(self.vertices, 0) / len(self.vertices)
+        center = np.sum(self.vertices, 0) / len(self.vertices)
+        return Vec2(center[0], center[1])
 
     def draw(self, cr: cairo.Context, transform=lambda v: v):
         start = self.vertices[0, :]
