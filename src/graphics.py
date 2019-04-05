@@ -151,6 +151,10 @@ class GraphicObject(ABC):
     def transform(self, matrix: np.ndarray):
         pass
 
+    @abstractmethod
+    def geometric_center():
+        pass
+
 
 class Point(GraphicObject):
     def __init__(self, pos: Vec2, name=''):
@@ -175,46 +179,58 @@ class Point(GraphicObject):
     def transform(self, matrix: np.ndarray):
         self.pos = matrix @ self.pos
 
+    @property
+    def geometric_center(self):
+        return self.pos
+
 
 class Line(GraphicObject):
     def __init__(self, start: Vec2, end: Vec2, name=''):
         super().__init__(name)
-
-        self.points = np.array([start, end], dtype=float)
+        self.start = start
+        self.end = end
 
     @property
     def x1(self):
-        return self.points[0, 0]
+        return self.start[0]
 
     @property
     def y1(self):
-        return self.points[0, 1]
+        return self.start[1]
 
     @property
     def x2(self):
-        return self.points[1, 0]
+        return self.end[0]
 
     @property
     def y2(self):
-        return self.points[1, 1]
+        return self.end[1]
 
     def draw(self, cr: cairo.Context, transform=lambda v: v):
-        coord_vp1 = transform(Vec2(self.x1, self.y1))
-        coord_vp2 = transform(Vec2(self.x2, self.y2))
+        coord_vp1 = transform(self.start)
+        coord_vp2 = transform(self.end)
 
         cr.move_to(coord_vp1.x, coord_vp1.y)
         cr.line_to(coord_vp2.x, coord_vp2.y)
         cr.stroke()
 
     def transform(self, matrix: np.ndarray):
-        self.points[0] = matrix @ self.points[0]
-        self.points[1] = matrix @ self.points[1]
+        self.start = matrix @ self.start
+        self.end = matrix @ self.end
+
+    @property
+    def geometric_center(self):
+        return (self.start + self.end) / 2
 
 
 class Polygon(GraphicObject):
     def __init__(self, vertices, name=''):
         self.name = name
         self.vertices = np.array(vertices, dtype=float)
+
+    @property
+    def geometric_center(self):
+        return np.sum(self.vertices, 0) / len(self.vertices)
 
     def draw(self, cr: cairo.Context, transform=lambda v: v):
         start = self.vertices[0, :]
@@ -234,17 +250,3 @@ class Polygon(GraphicObject):
     def transform(self, matrix: np.ndarray):
         for i, vertex in enumerate(self.vertices):
             self.vertices[i] = matrix @ vertex
-
-    def center(self):
-        first = self.vertices[0]
-        x = [p[0] for p in self.vertices] + [first[0]]
-        y = [p[1] for p in self.vertices] + [first[1]]
-
-        a = 6*sum(x[i]*y[i+1] - x[i+1]*y[i] for i, _ in enumerate(x[:-1]))/2
-
-        cx = sum((x[i] + x[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
-                 for i, _ in enumerate(x[:-1])) / a
-        cy = sum((y[i] + y[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
-                 for i, _ in enumerate(x[:-1])) / a
-
-        return Vec2(cx, cy)
