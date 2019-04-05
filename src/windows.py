@@ -105,6 +105,9 @@ class MainWindowHandler:
 
     def log(self, msg: str):
         self.output_buffer.insert_at_cursor(f'{msg}\n')
+        scrollwindow = self.builder.get_object('output_scrollwindow')
+        adjustment = scrollwindow.get_vadjustment()
+        adjustment.set_value(adjustment.get_upper())
 
     def on_draw(self, widget, cr):
         vp_w = widget.get_allocated_width()
