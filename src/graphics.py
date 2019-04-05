@@ -1,13 +1,28 @@
 '''Contains displayable object definitions.'''
 import cairo
 import numpy as np
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from math import cos, sin, radians
 
 
+class Vec2(np.ndarray):
+    def __new__(cls, x: float = 0, y: float = 0):
+        obj = np.asarray([x, y, 1], dtype=float).view(cls)
+        return obj
+
+    @property
+    def x(self) -> float:
+        return self[0]
+
+    @property
+    def y(self) -> float:
+        return self[1]
+
+
 class Vec3(np.ndarray):
-    def __new__(cls, x: float, y: float, z: float):
+    def __new__(cls, x: float = 0, y: float = 0, z: float = 0):
         obj = np.asarray([x, y, z, 1], dtype=float).view(cls)
         return obj
 
@@ -24,18 +39,45 @@ class Vec3(np.ndarray):
         return self[2]
 
 
-class Vec2(np.ndarray):
-    def __new__(cls, x: float, y: float):
-        obj = np.asarray([x, y, 1], dtype=float).view(cls)
-        return obj
+def make_offset_matrix(x: float, y: float) -> np.ndarray:
+    return np.array(
+        [
+            1, 0, x,
+            0, 1, y,
+            0, 0, 1,
+        ],
+        dtype=float
+    ).reshape(3, 3)
 
-    @property
-    def x(self) -> float:
-        return self[0]
 
-    @property
-    def y(self) -> float:
-        return self[1]
+def make_scale_matrix(x: float, y: float) -> np.ndarray:
+    return np.array(
+        [
+            x, 0, 0,
+            0, y, 0,
+            0, 0, 1,
+        ],
+        dtype=float
+    ).reshape(3, 3)
+
+
+def make_rotation_matrix(angle: float, ref: Vec2 = Vec2(0, 0)) -> np.ndarray:
+    angle = radians(angle)
+
+    rot_matrix = np.array(
+        [
+            cos(angle), sin(angle), 0,
+            -sin(angle), cos(angle), 0,
+            0, 0, 1,
+        ],
+        dtype=float
+    ).reshape(3, 3)
+
+    return (
+        make_offset_matrix(ref.x, ref.y) @
+        rot_matrix @
+        make_offset_matrix(-ref.x, -ref.y)
+    )
 
 
 @dataclass
@@ -105,6 +147,10 @@ class GraphicObject(ABC):
     def draw(self, cr: cairo.Context, transform):
         pass
 
+    @abstractmethod
+    def transform(self, matrix: np.ndarray):
+        pass
+
 
 class Point(GraphicObject):
     def __init__(self, pos: Vec2, name=''):
@@ -125,6 +171,9 @@ class Point(GraphicObject):
         cr.move_to(coord_vp.x, coord_vp.y)
         cr.arc(coord_vp.x, coord_vp.y, 1, 0, 2 * np.pi)
         cr.fill()
+
+    def transform(self, matrix: np.ndarray):
+        self.pos = matrix @ self.pos
 
 
 class Line(GraphicObject):
@@ -157,6 +206,10 @@ class Line(GraphicObject):
         cr.line_to(coord_vp2.x, coord_vp2.y)
         cr.stroke()
 
+    def transform(self, matrix: np.ndarray):
+        self.points[0] = matrix @ self.points[0]
+        self.points[1] = matrix @ self.points[1]
+
 
 class Polygon(GraphicObject):
     def __init__(self, vertices, name=''):
@@ -177,3 +230,21 @@ class Polygon(GraphicObject):
 
         cr.line_to(start_vp.x, start_vp.y)
         cr.stroke()
+
+    def transform(self, matrix: np.ndarray):
+        for i, vertex in enumerate(self.vertices):
+            self.vertices[i] = matrix @ vertex
+
+    def center(self):
+        first = self.vertices[0]
+        x = [p[0] for p in self.vertices] + [first[0]]
+        y = [p[1] for p in self.vertices] + [first[1]]
+
+        a = 6*sum(x[i]*y[i+1] - x[i+1]*y[i] for i, _ in enumerate(x[:-1]))/2
+
+        cx = sum((x[i] + x[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
+                 for i, _ in enumerate(x[:-1])) / a
+        cy = sum((y[i] + y[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
+                 for i, _ in enumerate(x[:-1])) / a
+
+        return Vec2(cx, cy)

@@ -1,11 +1,23 @@
+from enum import auto, Enum
 from functools import partial
 
 import gi
+from gi.repository import Gtk, Gdk
+
+from graphics import (
+    make_offset_matrix,
+    make_rotation_matrix,
+    make_scale_matrix,
+    GraphicObject,
+    Line,
+    Point,
+    Polygon,
+    Rect,
+    Vec2,
+)
+
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
-
-from gi.repository import Gtk, Gdk
-from graphics import Point, Line, Polygon, Vec2, Rect
 
 
 NB_PAGES = {
@@ -21,6 +33,12 @@ BUTTON_EVENTS = {
 }
 
 
+class RotationRef(Enum):
+    CENTER = auto()
+    ORIGIN = auto()
+    ABSOLUTE = auto()
+
+
 class NewObjectDialogHandler:
     def __init__(self, dialog, builder):
         self.dialog = dialog
@@ -32,14 +50,13 @@ class NewObjectDialogHandler:
         notebook = self.builder.get_object('notebook1')
 
         page_num = notebook.get_current_page()
-
         name = self.builder.get_object('entry_name').get_text()
+
         if NB_PAGES[page_num] == 'point':
             x = float(self.builder.get_object('entryX').get_text())
             y = float(self.builder.get_object('entryY').get_text())
 
             self.dialog.new_object = Point(Vec2(x, y), name=name)
-
         elif NB_PAGES[page_num] == 'line':
             y2 = float(self.builder.get_object('entryY2').get_text())
             x1 = float(self.builder.get_object('entryX1').get_text())
@@ -51,7 +68,6 @@ class NewObjectDialogHandler:
                 Vec2(x2, y2),
                 name=name
             )
-
         elif NB_PAGES[page_num] == 'polygon':
             if len(self.vertices) >= 3:
                 self.dialog.new_object = Polygon(self.vertices, name=name)
@@ -99,6 +115,8 @@ class MainWindowHandler:
         )
         self.output_buffer = self.builder.get_object('outputbuffer')
         self.press_start = None
+        self.old_size = self.window.get_allocation()
+        self.rotation_ref = RotationRef.CENTER
 
     def on_destroy(self, *args):
         self.window.get_application().quit()
@@ -109,7 +127,36 @@ class MainWindowHandler:
         adjustment = scrollwindow.get_vadjustment()
         adjustment.set_value(adjustment.get_upper())
 
+    def on_resize(self, widget: Gtk.Widget):
+        new_size = self.window.get_allocation()
+
+        old_w, old_h = self.old_size.width, self.old_size.height
+        new_w, new_h = new_size.width, new_size.height
+
+        ratio = Vec2(new_w / old_w, new_h / old_h)
+
+        _max = self.world_window.max
+        self.world_window.max = Vec2(_max.x * ratio.x, _max.y * ratio.y)
+
+        # FIXME: Actually not resizing at all because bugs :)
+        self.world_window.max = Vec2(new_w, new_h)
+
+        self.old_size = new_size
+
+        return
+        print(
+            f'new ratio: {ratio}\n'
+            f'    -> min: {self.world_window.min}\n'
+            f'    -> max: {self.world_window.max}\n'
+        )
+
     def on_draw(self, widget, cr):
+        def window_to_viewport(v: Vec2):
+            return Vec2(
+                ((v.x - self.world_window.min.x) / window_w) * vp_w,
+                (1 - ((v.y - self.world_window.min.y) / window_h)) * vp_h
+            )
+
         vp_w = widget.get_allocated_width()
         vp_h = widget.get_allocated_height()
 
@@ -121,13 +168,7 @@ class MainWindowHandler:
         window_h = self.world_window.height
 
         for object in self.display_file:
-            object.draw(
-                cr,
-                lambda v: Vec2(
-                    ((v.x - self.world_window.min.x) / window_w) * vp_w,
-                    (1 - ((v.y - self.world_window.min.y) / window_h)) * vp_h
-                )
-            )
+            object.draw(cr, window_to_viewport)
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
@@ -136,13 +177,10 @@ class MainWindowHandler:
         if response == Gtk.ResponseType.OK:
             if dialog.new_object is not None:
                 self.log(f"Object added: <{type(dialog.new_object).__name__}>")
-                self.display_file.append(dialog.new_object)
-                self.object_store.append([
-                    dialog.new_object.name,
-                    str(f'<{type(dialog.new_object).__name__}>')
-                ])
-
+                self.add_object(dialog.new_object)
                 self.builder.get_object('drawing_area').queue_draw()
+            else:
+                self.log("ERROR: invalid object")
 
     def on_quit(self, widget):
         self.window.close()
@@ -188,24 +226,71 @@ class MainWindowHandler:
 
         widget.queue_draw()
 
-    def on_press_direction(self, widget):
-        CALLBACKS = {
-            'window-move-left': partial(self.world_window.offset, [-10, 0]),
-            'window-move-right': partial(self.world_window.offset, [10, 0]),
-            'window-move-up': partial(self.world_window.offset, [0, -10]),
-            'window-move-down': partial(self.world_window.offset, [0, 10]),
-            'window-center-view': partial(
-                self.world_window.offset,
-                -self.world_window.min),
-            'window-rotate-left': partial(self.world_window.rotate, -10),
-            'window-rotate-right': partial(self.world_window.rotate, 10),
-            'window-zoom-in': partial(self.world_window.zoom, 0.9),
-            'window-zoom-out': partial(self.world_window.zoom, 1.1),
+    def on_press_navigation_button(self, widget):
+        TRANSFORMATIONS = {
+            'nav-move-up': partial(make_offset_matrix, 0, 10),
+            'nav-move-down': partial(make_offset_matrix, 0, -10),
+            'nav-move-left': partial(make_offset_matrix, -10, 0),
+            'nav-move-right': partial(make_offset_matrix, 10, 0),
+            'nav-rotate-left': partial(self.rotate_selection, -5),
+            'nav-rotate-right': partial(self.rotate_selection, 5),
+            'nav-zoom-in': partial(make_scale_matrix, 1.1, 1.1),
+            'nav-zoom-out': partial(make_scale_matrix, 0.9, 0.9),
         }
 
-        CALLBACKS[widget.get_name()]()
+        for obj in self.selected_objs():
+            obj.transform(matrix=TRANSFORMATIONS[widget.get_name()]())
 
         self.window.queue_draw()
+
+    def rotate_selection(self, angle: float):
+        try:
+            abs_x = int(self.builder.get_object('rotation-ref-x').get_text())
+            abs_y = int(self.builder.get_object('rotation-ref-y').get_text())
+        except:
+            abs_x = 0
+            abs_y = 0
+
+        for obj in self.selected_objs():
+            offset = {
+                RotationRef.CENTER: obj.center(),
+                RotationRef.ORIGIN: Vec2(0, 0),
+                RotationRef.ABSOLUTE: Vec2(float(abs_x), float(abs_y)),
+            }[self.rotation_ref]
+
+            return make_rotation_matrix(angle, offset)
+
+    def selected_objs(self):
+        tree = self.builder.get_object('tree-displayfiles')
+        store, rows = tree.get_selection().get_selected_rows()
+
+        return (self.display_file[int(str(index))] for index in rows)
+
+    def add_object(self, obj: GraphicObject):
+        self.display_file.append(obj)
+        self.object_store.append([
+            obj.name,
+            str(f'<{type(obj).__name__}>')
+        ])
+
+    def on_toggle_fixed_window(self, checkbox: Gtk.ToggleButton):
+        editable = checkbox.get_active()
+        for widget_id in ['window-width', 'window-height']:
+            widget = self.builder.get_object(widget_id)
+            widget.set_editable(editable)
+            widget.set_can_focus(editable)
+
+    def on_change_rotation_ref(self, widget: Gtk.RadioButton):
+        for w in widget.get_group():
+            if w.get_active():
+                self.rotation_ref = {
+                    'rotate-ref-obj-center': RotationRef.CENTER,
+                    'rotate-ref-origin': RotationRef.ORIGIN,
+                    'rotate-ref-abs': RotationRef.ABSOLUTE,
+                }[w.get_name()]
+                if w.get_name() == 'rotate-ref-abs':
+                    self.builder.get_object('rotation-ref-x').set_editable(True)
+                    self.builder.get_object('rotation-ref-y').set_editable(True)
 
 
 class MainWindow(Gtk.ApplicationWindow):
