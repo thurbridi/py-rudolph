@@ -5,17 +5,19 @@ This is an Interative Computer Graphics System made for UFSC's INE5420 course, c
 
 **This is an experimental version of Rudolph written in Python.**
 
+## setup.sh
+Assuming you have pipenv, PyGObject and it's dependencies intalled in your linux distribution, you can run `setup.sh` to install the project's dependencies and run it via pipenv.
 
-## Setup
+## Manual installation
+### Setup
 ```
 # pacman -S python cairo pkgconf gobject-introspection gtk3
-$ python -m venv .venv
-$ source .venv/bin/activate
-$ pip install pycairo PyGObject
+$ pipenv install
+$ pipenv shell
 ```
 
 
-## Run
+### Run
 ```
 $ python src/main.py
 ```
