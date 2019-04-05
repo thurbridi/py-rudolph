@@ -2,7 +2,6 @@ from enum import auto, Enum
 from functools import partial
 
 import gi
-import numpy as np
 from gi.repository import Gtk, Gdk
 
 from graphics import (
@@ -114,19 +113,22 @@ class MainWindowHandler:
             Vec2(0, 0),
             Vec2(600, 300)
         )
+        self.output_buffer = self.builder.get_object('outputbuffer')
         self.press_start = None
         self.old_size = self.window.get_allocation()
         self.rotation_ref = RotationRef.CENTER
 
-        self.add_object(Polygon([
-                Vec2(0, 0), Vec2(0, 50), Vec2(50, 50), Vec2(50, 0),
-            ], name='sqr'))
-
     def on_destroy(self, *args):
         self.window.get_application().quit()
 
+    def log(self, msg: str):
+        self.output_buffer.insert_at_cursor(f'{msg}\n')
+        scrollwindow = self.builder.get_object('output_scrollwindow')
+        adjustment = scrollwindow.get_vadjustment()
+        adjustment.set_value(adjustment.get_upper())
+
     def on_resize(self, widget: Gtk.Widget):
-        new_size =  self.window.get_allocation()
+        new_size = self.window.get_allocation()
 
         old_w, old_h = self.old_size.width, self.old_size.height
         new_w, new_h = new_size.width, new_size.height
@@ -173,10 +175,12 @@ class MainWindowHandler:
         response = dialog.dialog_window.run()
 
         if response == Gtk.ResponseType.OK:
-            self.add_object(dialog.new_object)
-            self.builder.get_object('drawing_area').queue_draw()
-        elif response == Gtk.ResponseType.CLOSE:
-            print('CANCEL')
+            if dialog.new_object is not None:
+                self.log(f"Object added: <{type(dialog.new_object).__name__}>")
+                self.add_object(dialog.new_object)
+                self.builder.get_object('drawing_area').queue_draw()
+            else:
+                self.log("ERROR: invalid object")
 
     def on_quit(self, widget):
         self.window.close()
