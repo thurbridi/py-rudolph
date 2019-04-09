@@ -1,19 +1,15 @@
 from enum import auto, Enum
-from functools import partial
 
 import gi
 from gi.repository import Gtk, Gdk
 
 from graphics import (
-    make_offset_matrix,
-    make_rotation_matrix,
-    make_scale_matrix,
     GraphicObject,
     Line,
     Point,
     Polygon,
     Rect,
-    Vec2,
+    Vec2
 )
 
 gi.require_version('Gtk', '3.0')
@@ -224,47 +220,50 @@ class MainWindowHandler:
 
     def on_scroll(self, widget, event):
         if event.direction == Gdk.ScrollDirection.UP:
-            self.world_window.max *= 0.5
-            self.world_window.min *= 0.5
+            self.world_window.zoom(0.5)
         elif event.direction == Gdk.ScrollDirection.DOWN:
-            self.world_window.max *= 2
-            self.world_window.min *= 2
+            self.world_window.zoom(2.0)
 
         widget.queue_draw()
 
     def on_press_navigation_button(self, widget):
         TRANSFORMATIONS = {
-            'nav-move-up': partial(make_offset_matrix, 0, 10),
-            'nav-move-down': partial(make_offset_matrix, 0, -10),
-            'nav-move-left': partial(make_offset_matrix, -10, 0),
-            'nav-move-right': partial(make_offset_matrix, 10, 0),
-            'nav-rotate-left': partial(self.rotate_selection, -5),
-            'nav-rotate-right': partial(self.rotate_selection, 5),
-            'nav-zoom-in': partial(make_scale_matrix, 1.1, 1.1),
-            'nav-zoom-out': partial(make_scale_matrix, 0.9, 0.9),
+            'nav-move-up': ('translate', Vec2(0, 10)),
+            'nav-move-down': ('translate', Vec2(0, -10)),
+            'nav-move-left': ('translate', Vec2(-10, 0)),
+            'nav-move-right': ('translate', Vec2(10, 0)),
+            'nav-rotate-left': ('rotate', -5),
+            'nav-rotate-right': ('rotate', 5),
+            'nav-zoom-in': ('scale', Vec2(1.1, 1.1)),
+            'nav-zoom-out': ('scale', Vec2(0.9, 0.9)),
         }
 
+        op, *args = TRANSFORMATIONS[widget.get_name()]
+
         for obj in self.selected_objs():
-            obj.transform(matrix=TRANSFORMATIONS[widget.get_name()]())
+            if op == 'translate':
+                obj.translate(*args)
+
+            elif op == 'scale':
+                obj.scale(*args)
+
+            elif op == 'rotate':
+                try:
+                    abs_x = int(self.builder.get_object('rotation-ref-x').get_text())
+                    abs_y = int(self.builder.get_object('rotation-ref-y').get_text())
+                except:
+                    abs_x = 0
+                    abs_y = 0
+
+                ref = {
+                    RotationRef.CENTER: obj.centroid,
+                    RotationRef.ORIGIN: Vec2(0, 0),
+                    RotationRef.ABSOLUTE: Vec2(float(abs_x), float(abs_y)),
+                }[self.rotation_ref]
+
+                obj.rotate(*args, ref)
 
         self.window.queue_draw()
-
-    def rotate_selection(self, angle: float):
-        try:
-            abs_x = int(self.builder.get_object('rotation-ref-x').get_text())
-            abs_y = int(self.builder.get_object('rotation-ref-y').get_text())
-        except:
-            abs_x = 0
-            abs_y = 0
-
-        for obj in self.selected_objs():
-            offset = {
-                RotationRef.CENTER: obj.centroid,
-                RotationRef.ORIGIN: Vec2(0, 0),
-                RotationRef.ABSOLUTE: Vec2(float(abs_x), float(abs_y)),
-            }[self.rotation_ref]
-
-            return make_rotation_matrix(angle, offset)
 
     def selected_objs(self):
         tree = self.builder.get_object('tree-displayfiles')

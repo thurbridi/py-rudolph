@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from math import cos, sin, radians
 
+from transformations import offset_matrix, scale_matrix, rotation_matrix
+
 
 class Vec2(np.ndarray):
     def __new__(cls, x: float = 0, y: float = 0):
@@ -37,47 +39,6 @@ class Vec3(np.ndarray):
     @property
     def z(self) -> float:
         return self[2]
-
-
-def make_offset_matrix(x: float, y: float) -> np.ndarray:
-    return np.array(
-        [
-            1, 0, x,
-            0, 1, y,
-            0, 0, 1,
-        ],
-        dtype=float
-    ).reshape(3, 3)
-
-
-def make_scale_matrix(x: float, y: float) -> np.ndarray:
-    return np.array(
-        [
-            x, 0, 0,
-            0, y, 0,
-            0, 0, 1,
-        ],
-        dtype=float
-    ).reshape(3, 3)
-
-
-def make_rotation_matrix(angle: float, ref: Vec2 = Vec2(0, 0)) -> np.ndarray:
-    angle = radians(angle)
-
-    rot_matrix = np.array(
-        [
-            cos(angle), sin(angle), 0,
-            -sin(angle), cos(angle), 0,
-            0, 0, 1,
-        ],
-        dtype=float
-    ).reshape(3, 3)
-
-    return (
-        make_offset_matrix(ref.x, ref.y) @
-        rot_matrix @
-        make_offset_matrix(-ref.x, -ref.y)
-    )
 
 
 @dataclass
@@ -151,6 +112,29 @@ class GraphicObject(ABC):
     def transform(self, matrix: np.ndarray):
         pass
 
+    def translate(self, offset: Vec2):
+        self.transform(offset_matrix(offset.x, offset.y))
+
+    def scale(self, factor: Vec2):
+        cx = self.centroid.x
+        cy = self.centroid.y
+        t_matrix = (
+            offset_matrix(-cx, -cy) @
+            scale_matrix(factor.x, factor.y) @
+            offset_matrix(cx, cy)
+        )
+        self.transform(t_matrix)
+
+    def rotate(self, angle: float, reference: Vec2):
+        refx = reference.x
+        refy = reference.y
+        t_matrix = (
+            offset_matrix(-refx, -refy) @
+            rotation_matrix(angle) @
+            offset_matrix(refx, refy)
+        )
+        self.transform(t_matrix)
+
     @abstractmethod
     def centroid():
         pass
@@ -177,7 +161,7 @@ class Point(GraphicObject):
         cr.fill()
 
     def transform(self, matrix: np.ndarray):
-        self.pos = matrix @ self.pos
+        self.pos = self.pos @ matrix
 
     @property
     def centroid(self):
@@ -215,8 +199,8 @@ class Line(GraphicObject):
         cr.stroke()
 
     def transform(self, matrix: np.ndarray):
-        self.start = matrix @ self.start
-        self.end = matrix @ self.end
+        self.start = self.start @ matrix
+        self.end = self.end @ matrix
 
     @property
     def centroid(self):
@@ -250,4 +234,4 @@ class Polygon(GraphicObject):
 
     def transform(self, matrix: np.ndarray):
         for i, vertex in enumerate(self.vertices):
-            self.vertices[i] = matrix @ vertex
+            self.vertices[i] = vertex @ matrix
