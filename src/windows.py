@@ -9,7 +9,7 @@ from graphics import (
     Point,
     Polygon,
     Rect,
-    Vec2
+    Vec2,
 )
 
 gi.require_version('Gtk', '3.0')
