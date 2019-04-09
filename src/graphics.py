@@ -108,8 +108,8 @@ class Rect():
         self.max = self.max @ rot_matrix
 
     def zoom(self, amount: float):
-        self.min *= amount
         self.max *= amount
+        self.min *= amount
 
 
 @dataclass

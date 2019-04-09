@@ -106,22 +106,23 @@ class NewObjectDialog(Gtk.Dialog):
 class MainWindowHandler:
     def __init__(self, builder):
         self.builder = builder
-        self.window = self.builder.get_object('main_window')
-        self.object_store = self.builder.get_object('object_store')
+        self.window = builder.get_object('main_window')
+        self.object_store = builder.get_object('object_store')
         self.display_file = []
-        self.world_window = Rect(
-            Vec2(0, 0),
-            Vec2(600, 300)
-        )
-        self.output_buffer = self.builder.get_object('outputbuffer')
+        self.world_window = None
+        self.output_buffer = builder.get_object('outputbuffer')
         self.press_start = None
-        self.old_size = self.window.get_allocation()
+        self.old_size = None
         self.rotation_ref = RotationRef.CENTER
 
-        self.add_object(Point(Vec2(30, 30), name='point'))
+        self.add_object(Point(Vec2(0, 0), name='origin'))
         self.add_object(Line(Vec2(200, 200), Vec2(100, 150), name='line'))
         self.add_object(Polygon(
             [Vec2(400, 400), Vec2(500, 400), Vec2(450, 300)],
+            name='poly'
+        ))
+        self.add_object(Polygon(
+            [Vec2(100, 300), Vec2(200, 300), Vec2(200, 400), Vec2(100, 400)],
             name='poly'
         ))
 
@@ -134,28 +135,27 @@ class MainWindowHandler:
         adjustment = scrollwindow.get_vadjustment()
         adjustment.set_value(adjustment.get_upper())
 
-    def on_resize(self, widget: Gtk.Widget):
-        new_size = self.window.get_allocation()
+    def on_resize(self, widget: Gtk.Widget, allocation: Gdk.Rectangle):
+        if self.world_window is None:
+            self.old_size = allocation
+            self.world_window = Rect(
+                Vec2(0, 0),
+                Vec2(allocation.width, allocation.height)
+            )
 
-        old_w, old_h = self.old_size.width, self.old_size.height
-        new_w, new_h = new_size.width, new_size.height
+        w_proportion = allocation.width / self.old_size.width
+        h_proportion = allocation.height / self.old_size.height
 
-        ratio = Vec2(new_w / old_w, new_h / old_h)
-
-        _max = self.world_window.max
-        self.world_window.max = Vec2(_max.x * ratio.x, _max.y * ratio.y)
-
-        # FIXME: Actually not resizing at all because bugs :)
-        self.world_window.max = Vec2(new_w, new_h)
-
-        self.old_size = new_size
-
-        return
-        print(
-            f'new ratio: {ratio}\n'
-            f'    -> min: {self.world_window.min}\n'
-            f'    -> max: {self.world_window.max}\n'
+        self.world_window.max = Vec2(
+            self.world_window.max.x * w_proportion,
+            self.world_window.max.y * h_proportion
         )
+        self.world_window.min = Vec2(
+            self.world_window.min.x * w_proportion,
+            self.world_window.min.y * h_proportion
+        )
+
+        self.old_size = allocation
 
     def on_draw(self, widget, cr):
         def window_to_viewport(v: Vec2):
@@ -224,12 +224,11 @@ class MainWindowHandler:
 
     def on_scroll(self, widget, event):
         if event.direction == Gdk.ScrollDirection.UP:
-            # zoom in 10%
-            self.world_window.max *= 0.9
-
+            self.world_window.max *= 0.5
+            self.world_window.min *= 0.5
         elif event.direction == Gdk.ScrollDirection.DOWN:
-            # zoom out 10%
-            self.world_window.max *= 1.1
+            self.world_window.max *= 2
+            self.world_window.min *= 2
 
         widget.queue_draw()
 
