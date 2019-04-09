@@ -43,7 +43,7 @@ class Vec3(np.ndarray):
 
 
 @dataclass
-class Rect():
+class Rect:
     min: Vec2
     max: Vec2
 

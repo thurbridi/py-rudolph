@@ -28,7 +28,7 @@
       <placeholder/>
     </child>
     <child>
-      <object class="GtkBox">
+      <object class="GtkBox" id="main-window-box">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
@@ -173,7 +173,7 @@
           <object class="GtkBox" id="main-box">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="margin_top">8</property>
+            <property name="margin_left">8</property>
             <property name="margin_bottom">8</property>
             <property name="vexpand">True</property>
             <child>
@@ -586,18 +586,64 @@
                           <object class="GtkBox" id="window-box">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="can_default">True</property>
-                            <property name="has_default">True</property>
+                            <property name="orientation">vertical</property>
                             <property name="spacing">8</property>
                             <child>
-                              <object class="GtkCheckButton" id="check-fixed-window">
-                                <property name="label" translatable="yes">Fixed</property>
-                                <property name="width_request">64</property>
+                              <object class="GtkBox" id="window-size-box">
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_toggle_fixed_window" swapped="no"/>
+                                <property name="can_focus">False</property>
+                                <property name="can_default">True</property>
+                                <property name="has_default">True</property>
+                                <property name="spacing">8</property>
+                                <child>
+                                  <object class="GtkCheckButton" id="check-fixed-window">
+                                    <property name="label" translatable="yes">Fixed Size</property>
+                                    <property name="width_request">64</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">False</property>
+                                    <property name="draw_indicator">True</property>
+                                    <signal name="toggled" handler="on_toggle_fixed_window" swapped="no"/>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="window-width">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="editable">False</property>
+                                    <property name="max_length">8</property>
+                                    <property name="width_chars">9</property>
+                                    <property name="max_width_chars">4</property>
+                                    <property name="caps_lock_warning">False</property>
+                                    <property name="placeholder_text" translatable="yes">width (px)</property>
+                                    <property name="input_purpose">number</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="window-height">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="editable">False</property>
+                                    <property name="width_chars">9</property>
+                                    <property name="placeholder_text" translatable="yes">height (px)</property>
+                                    <property name="input_purpose">number</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -606,36 +652,42 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="window-width">
+                              <object class="GtkBox" id="window-rot-box">
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="editable">False</property>
-                                <property name="max_length">8</property>
-                                <property name="width_chars">10</property>
-                                <property name="max_width_chars">4</property>
-                                <property name="caps_lock_warning">False</property>
-                                <property name="placeholder_text" translatable="yes">width (px)</property>
-                                <property name="input_purpose">number</property>
+                                <property name="can_focus">False</property>
+                                <property name="spacing">8</property>
+                                <child>
+                                  <object class="GtkEntry" id="window-rot-entry">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="placeholder_text" translatable="yes">Angle (degrees)</property>
+                                    <property name="input_purpose">number</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="window-rot-btn">
+                                    <property name="label" translatable="yes">Rotate</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <signal name="clicked" handler="on_clicked_rotate_window" swapped="no"/>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">True</property>
                                 <property name="position">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="window-height">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="editable">False</property>
-                                <property name="width_chars">10</property>
-                                <property name="placeholder_text" translatable="yes">height (px)</property>
-                                <property name="input_purpose">number</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">2</property>
                               </packing>
                             </child>
                           </object>
