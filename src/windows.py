@@ -174,8 +174,8 @@ class MainWindowHandler:
         window_w = self.world_window.width
         window_h = self.world_window.height
 
-        for object in self.display_file:
-            object.draw(cr, window_to_viewport)
+        for obj in self.display_file:
+            obj.draw(cr, window_to_viewport)
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
