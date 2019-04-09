@@ -3,6 +3,7 @@ from enum import auto, Enum
 import gi
 from gi.repository import Gtk, Gdk
 
+import graphics
 from graphics import (
     GraphicObject,
     Line,
@@ -175,7 +176,14 @@ class MainWindowHandler:
         window_h = self.world_window.height
 
         for obj in self.display_file:
-            obj.draw(cr, window_to_viewport)
+            obj.draw(
+                cr,
+                graphics.Viewport(
+                    region=Rect(min=Vec2(0, 0), max=Vec2(vp_w, vp_h)),
+                    window=self.world_window,
+                ),
+                window_to_viewport
+            )
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
@@ -387,6 +395,18 @@ class MainWindowHandler:
                 file.close()
                 self.current_file = path
             file_chooser.destroy()
+
+    def on_clicked_rotate_window(self, widget: Gtk.Button):
+        self.normalize(angle=int(self.builder.get_object('window-rot-entry').get_text()))
+
+    def normalize(self, angle: float):
+        print('self.normalize:')
+        window_size = (self.world_window.width, self.world_window.height)
+        print(f'window: {self.world_window}')
+        normalized = [
+            obj.normalize(angle, window=self.world_window)
+            for obj in self.display_file
+        ]
 
 
 class MainWindow(Gtk.ApplicationWindow):

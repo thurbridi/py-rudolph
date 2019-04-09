@@ -1,14 +1,17 @@
 '''Contains displayable object definitions.'''
-import cairo
-import numpy as np
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 from math import cos, sin, radians
+from typing import Callable
 
 from transformations import offset_matrix, scale_matrix, rotation_matrix
 
+import cairo
+import numpy as np
+from cairo import Context
+
+np.set_printoptions(formatter={'float': lambda x: "{0:0.2f}, ".format(x)})
 
 class Vec2(np.ndarray):
     def __new__(cls, x: float = 0, y: float = 0):
@@ -42,6 +45,13 @@ class Vec3(np.ndarray):
         return self[2]
 
 
+TransformType = Callable[[Vec2], Vec2]
+
+
+def identity(v: Vec2) -> Vec2:
+    return v
+
+
 @dataclass
 class Rect:
     min: Vec2
@@ -73,12 +83,22 @@ class Rect:
         self.max *= amount
         self.min *= amount
 
+    def center(self) -> Vec2:
+        return (self.max + self.min) / 2
+
 
 @dataclass
 class Viewport:
-    min: Vec2
-    max: Vec2
+    region: Rect
     window: Rect
+
+    @property
+    def min(self):
+        return region.min
+
+    @property
+    def max(self):
+        return region.max
 
     def transform(self, p: Vec2):
         if not isinstance(p, Vec2):
@@ -106,7 +126,11 @@ class GraphicObject(ABC):
         self.name = name
 
     @abstractmethod
-    def draw(self, cr: cairo.Context, transform):
+    def draw(self,
+            cr: Context,
+            viewport: Viewport,
+            transform: TransformType,
+    ):
         pass
 
     @abstractmethod
@@ -140,12 +164,17 @@ class GraphicObject(ABC):
     def centroid():
         pass
 
+    @abstractmethod
+    def normalize(self, angle: float, window: Rect):
+        pass
+
 
 class Point(GraphicObject):
     def __init__(self, pos: Vec2, name=''):
         super().__init__(name)
 
         self.pos = pos
+        self.normalize(0, Rect(min=Vec2(), max=Vec2()))
 
     @property
     def x(self) -> float:
@@ -155,8 +184,21 @@ class Point(GraphicObject):
     def y(self) -> float:
         return self.pos[1]
 
-    def draw(self, cr: cairo.Context, transform=lambda v: v):
-        coord_vp = transform(Vec2(self.x, self.y))
+    def draw(self,
+            cr: Context,
+            viewport: Viewport,
+            transform: TransformType = identity,
+    ):
+        coord_vp = self.normalized @ scale_matrix(
+            viewport.region.width, viewport.region.height
+        )
+
+        # print('Point.draw():')
+        # print(f'    >>> normalized: {self.normalized}')
+        # print(f'    >>> viewport region: {viewport.region.max}')
+        # print(f'    >>> normalized²: {coord_vp}')
+
+        coord_vp = transform(coord_vp)
         cr.move_to(coord_vp.x, coord_vp.y)
         cr.arc(coord_vp.x, coord_vp.y, 1, 0, 2 * np.pi)
         cr.fill()
@@ -167,6 +209,15 @@ class Point(GraphicObject):
     @property
     def centroid(self):
         return self.pos
+
+    def normalize(self, angle: float, window: Rect):
+        center = window.center()
+        rot_matrix = (
+            offset_matrix(-center.x, center.y) @
+            rotation_matrix(angle) @
+            offset_matrix(center.x, center.y)
+        )
+        self.normalized = normalize(self.pos @ rot_matrix)
 
 
 class Line(GraphicObject):
@@ -191,7 +242,11 @@ class Line(GraphicObject):
     def y2(self):
         return self.end[1]
 
-    def draw(self, cr: cairo.Context, transform=lambda v: v):
+    def draw(self,
+            cr: Context,
+            viewport: Viewport,
+            transform: TransformType = identity
+    ):
         coord_vp1 = transform(self.start)
         coord_vp2 = transform(self.end)
 
@@ -207,6 +262,18 @@ class Line(GraphicObject):
     def centroid(self):
         return (self.start + self.end) / 2
 
+    def normalize(self, angle: float, window: Rect):
+        center = window.center()
+        rot_matrix = (
+            offset_matrix(-center.x, center.y) @
+            rotation_matrix(angle) @
+            offset_matrix(center.x, center.y)
+        )
+        self.normalized = [
+            normalize(rot_matrix @ self.start),
+            normalize(rot_matrix @ self.end)
+        ]
+
 
 class Polygon(GraphicObject):
     def __init__(self, vertices, name=''):
@@ -218,8 +285,12 @@ class Polygon(GraphicObject):
         center = np.sum(self.vertices, 0) / len(self.vertices)
         return Vec2(center[0], center[1])
 
-    def draw(self, cr: cairo.Context, transform=lambda v: v):
-        start = self.vertices[0]
+    def draw(self,
+            cr: Context,
+            viewport: Viewport,
+            transform: TransformType = identity
+    ):
+        start = self.vertices[0, :]
         start_vp = transform(Vec2(start[0], start[1]))
         cr.move_to(start_vp.x, start_vp.y)
 
@@ -236,6 +307,9 @@ class Polygon(GraphicObject):
     def transform(self, matrix: np.ndarray):
         for i, vertex in enumerate(self.vertices):
             self.vertices[i] = vertex @ matrix
+
+    def normalize(self, angle: float, window: Rect):
+        pass
 
 
 @dataclass
