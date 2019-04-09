@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from math import cos, sin, radians
 
+from transformations import offset_matrix, scale_matrix, rotation_matrix
+
 
 class Vec2(np.ndarray):
     def __new__(cls, x: float = 0, y: float = 0):
@@ -39,47 +41,6 @@ class Vec3(np.ndarray):
         return self[2]
 
 
-def make_offset_matrix(x: float, y: float) -> np.ndarray:
-    return np.array(
-        [
-            1, 0, x,
-            0, 1, y,
-            0, 0, 1,
-        ],
-        dtype=float
-    ).reshape(3, 3)
-
-
-def make_scale_matrix(x: float, y: float) -> np.ndarray:
-    return np.array(
-        [
-            x, 0, 0,
-            0, y, 0,
-            0, 0, 1,
-        ],
-        dtype=float
-    ).reshape(3, 3)
-
-
-def make_rotation_matrix(angle: float, ref: Vec2 = Vec2(0, 0)) -> np.ndarray:
-    angle = radians(angle)
-
-    rot_matrix = np.array(
-        [
-            cos(angle), sin(angle), 0,
-            -sin(angle), cos(angle), 0,
-            0, 0, 1,
-        ],
-        dtype=float
-    ).reshape(3, 3)
-
-    return (
-        make_offset_matrix(ref.x, ref.y) @
-        rot_matrix @
-        make_offset_matrix(-ref.x, -ref.y)
-    )
-
-
 @dataclass
 class Rect():
     min: Vec2
@@ -108,8 +69,8 @@ class Rect():
         self.max = self.max @ rot_matrix
 
     def zoom(self, amount: float):
-        self.min *= amount
         self.max *= amount
+        self.min *= amount
 
 
 @dataclass
@@ -151,6 +112,33 @@ class GraphicObject(ABC):
     def transform(self, matrix: np.ndarray):
         pass
 
+    def translate(self, offset: Vec2):
+        self.transform(offset_matrix(offset.x, offset.y))
+
+    def scale(self, factor: Vec2):
+        cx = self.centroid.x
+        cy = self.centroid.y
+        t_matrix = (
+            offset_matrix(-cx, -cy) @
+            scale_matrix(factor.x, factor.y) @
+            offset_matrix(cx, cy)
+        )
+        self.transform(t_matrix)
+
+    def rotate(self, angle: float, reference: Vec2):
+        refx = reference.x
+        refy = reference.y
+        t_matrix = (
+            offset_matrix(-refx, -refy) @
+            rotation_matrix(angle) @
+            offset_matrix(refx, refy)
+        )
+        self.transform(t_matrix)
+
+    @abstractmethod
+    def centroid():
+        pass
+
 
 class Point(GraphicObject):
     def __init__(self, pos: Vec2, name=''):
@@ -173,48 +161,61 @@ class Point(GraphicObject):
         cr.fill()
 
     def transform(self, matrix: np.ndarray):
-        self.pos = matrix @ self.pos
+        self.pos = self.pos @ matrix
+
+    @property
+    def centroid(self):
+        return self.pos
 
 
 class Line(GraphicObject):
     def __init__(self, start: Vec2, end: Vec2, name=''):
         super().__init__(name)
-
-        self.points = np.array([start, end], dtype=float)
+        self.start = start
+        self.end = end
 
     @property
     def x1(self):
-        return self.points[0, 0]
+        return self.start[0]
 
     @property
     def y1(self):
-        return self.points[0, 1]
+        return self.start[1]
 
     @property
     def x2(self):
-        return self.points[1, 0]
+        return self.end[0]
 
     @property
     def y2(self):
-        return self.points[1, 1]
+        return self.end[1]
 
     def draw(self, cr: cairo.Context, transform=lambda v: v):
-        coord_vp1 = transform(Vec2(self.x1, self.y1))
-        coord_vp2 = transform(Vec2(self.x2, self.y2))
+        coord_vp1 = transform(self.start)
+        coord_vp2 = transform(self.end)
 
         cr.move_to(coord_vp1.x, coord_vp1.y)
         cr.line_to(coord_vp2.x, coord_vp2.y)
         cr.stroke()
 
     def transform(self, matrix: np.ndarray):
-        self.points[0] = matrix @ self.points[0]
-        self.points[1] = matrix @ self.points[1]
+        self.start = self.start @ matrix
+        self.end = self.end @ matrix
+
+    @property
+    def centroid(self):
+        return (self.start + self.end) / 2
 
 
 class Polygon(GraphicObject):
     def __init__(self, vertices, name=''):
         self.name = name
         self.vertices = np.array(vertices, dtype=float)
+
+    @property
+    def centroid(self):
+        center = np.sum(self.vertices, 0) / len(self.vertices)
+        return Vec2(center[0], center[1])
 
     def draw(self, cr: cairo.Context, transform=lambda v: v):
         start = self.vertices[0, :]
@@ -233,18 +234,4 @@ class Polygon(GraphicObject):
 
     def transform(self, matrix: np.ndarray):
         for i, vertex in enumerate(self.vertices):
-            self.vertices[i] = matrix @ vertex
-
-    def center(self):
-        first = self.vertices[0]
-        x = [p[0] for p in self.vertices] + [first[0]]
-        y = [p[1] for p in self.vertices] + [first[1]]
-
-        a = 6*sum(x[i]*y[i+1] - x[i+1]*y[i] for i, _ in enumerate(x[:-1]))/2
-
-        cx = sum((x[i] + x[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
-                 for i, _ in enumerate(x[:-1])) / a
-        cy = sum((y[i] + y[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
-                 for i, _ in enumerate(x[:-1])) / a
-
-        return Vec2(cx, cy)
+            self.vertices[i] = vertex @ matrix

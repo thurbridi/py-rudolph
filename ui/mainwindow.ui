@@ -23,7 +23,6 @@
   <object class="GtkTextBuffer" id="outputbuffer"/>
   <object class="GtkApplicationWindow" id="main_window">
     <property name="can_focus">False</property>
-    <signal name="check-resize" handler="on_resize" swapped="no"/>
     <signal name="destroy" handler="on_destroy" swapped="no"/>
     <child>
       <placeholder/>
@@ -685,6 +684,7 @@
                         <signal name="draw" handler="on_draw" swapped="no"/>
                         <signal name="motion-notify-event" handler="on_motion" swapped="no"/>
                         <signal name="scroll-event" handler="on_scroll" swapped="no"/>
+                        <signal name="size-allocate" handler="on_resize" swapped="no"/>
                       </object>
                     </child>
                   </object>
