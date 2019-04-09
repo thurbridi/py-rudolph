@@ -152,7 +152,7 @@ class GraphicObject(ABC):
         pass
 
     @abstractmethod
-    def geometric_center():
+    def centroid():
         pass
 
 
@@ -180,7 +180,7 @@ class Point(GraphicObject):
         self.pos = matrix @ self.pos
 
     @property
-    def geometric_center(self):
+    def centroid(self):
         return self.pos
 
 
@@ -219,7 +219,7 @@ class Line(GraphicObject):
         self.end = matrix @ self.end
 
     @property
-    def geometric_center(self):
+    def centroid(self):
         return (self.start + self.end) / 2
 
 
@@ -229,7 +229,7 @@ class Polygon(GraphicObject):
         self.vertices = np.array(vertices, dtype=float)
 
     @property
-    def geometric_center(self):
+    def centroid(self):
         center = np.sum(self.vertices, 0) / len(self.vertices)
         return Vec2(center[0], center[1])
 

@@ -260,7 +260,7 @@ class MainWindowHandler:
 
         for obj in self.selected_objs():
             offset = {
-                RotationRef.CENTER: obj.geometric_center,
+                RotationRef.CENTER: obj.centroid,
                 RotationRef.ORIGIN: Vec2(0, 0),
                 RotationRef.ABSOLUTE: Vec2(float(abs_x), float(abs_y)),
             }[self.rotation_ref]
