@@ -216,11 +216,25 @@ class MainWindowHandler:
             self.dragging = True
 
     def on_motion(self, widget, event):
+        def viewport_to_window(v: Vec2):
+            margin = 10
+
+            window_w = self.world_window.width
+            window_h = self.world_window.height
+
+            vp_w = widget.get_allocated_width() - margin
+            vp_h = widget.get_allocated_height() - margin
+
+            return Vec2(
+                (v.x / vp_w) * window_w,
+                (v.y / vp_h) * window_h
+            )
+
         # register x, y
         # translate window
         if self.dragging:
             current = Vec2(-event.x, event.y)
-            delta = current - self.press_start
+            delta = viewport_to_window(current - self.press_start)
             self.press_start = current
             self.world_window.min += delta
             self.world_window.max += delta
