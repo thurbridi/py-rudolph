@@ -297,6 +297,43 @@ class MainWindowHandler:
                     self.builder.get_object('rotation-ref-x').set_editable(True)
                     self.builder.get_object('rotation-ref-y').set_editable(True)
 
+    def on_new_file(self, item):
+        self.log('NEW FILE')
+        # Translate world_window center to (0, 0) and wipe display_file
+
+    def on_open_file(self, item):
+        self.log('OPEN FILE:')
+        file_chooser = Gtk.FileChooserDialog(
+            title='Open File',
+            parent=self.window,
+            action=Gtk.FileChooserAction.OPEN,
+            buttons=(
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN, Gtk.ResponseType.OK
+            )
+        )
+
+        filter = Gtk.FileFilter()
+        filter.set_name('CG OBJ')
+        filter.add_pattern('*.obj')
+        file_chooser.add_filter(filter)
+
+        response = file_chooser.run()
+        if response == Gtk.ResponseType.OK:
+            path = file_chooser.get_filename()
+            self.log(path)
+            file = open(path)
+            contents = file.read()
+            self.log(f'{contents}\n')
+        file_chooser.destroy()
+
+    def on_save_file(self, item):
+        label = item.get_label()
+        if label == 'gtk-save':
+            self.log('SAVE FILE')
+        elif label == 'gtk-save-as':
+            self.log('SAVE AS FILE')
+
 
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):

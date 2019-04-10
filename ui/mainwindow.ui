@@ -53,6 +53,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
+                        <signal name="activate" handler="on_new_file" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -62,6 +63,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
+                        <signal name="activate" handler="on_open_file" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -71,6 +73,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
+                        <signal name="activate" handler="on_save_file" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -80,6 +83,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
+                        <signal name="activate" handler="on_save_file" swapped="no"/>
                       </object>
                     </child>
                     <child>
