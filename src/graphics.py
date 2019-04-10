@@ -4,6 +4,7 @@ import numpy as np
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import List
 from math import cos, sin, radians
 
 from transformations import offset_matrix, scale_matrix, rotation_matrix
@@ -235,3 +236,9 @@ class Polygon(GraphicObject):
     def transform(self, matrix: np.ndarray):
         for i, vertex in enumerate(self.vertices):
             self.vertices[i] = vertex @ matrix
+
+
+@dataclass
+class Scene:
+    window: Rect
+    objs: List[GraphicObject]
