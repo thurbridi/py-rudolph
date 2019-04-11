@@ -1,13 +1,11 @@
 '''Contains displayable object definitions.'''
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List
+from typing import Callable, List
 from math import cos, sin, radians
-from typing import Callable
 
 from transformations import offset_matrix, scale_matrix, rotation_matrix
 
-import cairo
 import numpy as np
 from cairo import Context
 
@@ -90,11 +88,11 @@ class Viewport:
 
     @property
     def min(self):
-        return region.min
+        return self.region.min
 
     @property
     def max(self):
-        return region.max
+        return self.region.max
 
     def transform(self, p: Vec2):
         if not isinstance(p, Vec2):
@@ -122,7 +120,8 @@ class GraphicObject(ABC):
         self.name = name
 
     @abstractmethod
-    def draw(self,
+    def draw(
+            self,
             cr: Context,
             viewport: Viewport,
             transform: TransformType,
@@ -180,7 +179,8 @@ class Point(GraphicObject):
     def y(self) -> float:
         return self.pos[1]
 
-    def draw(self,
+    def draw(
+            self,
             cr: Context,
             viewport: Viewport,
             transform: TransformType = identity,
@@ -236,12 +236,14 @@ class Line(GraphicObject):
     def y2(self):
         return self.end[1]
 
-    def draw(self,
+    def draw(
+            self,
             cr: Context,
             viewport: Viewport,
             transform: TransformType = identity
     ):
         scale = scale_matrix(viewport.region.width, viewport.region.height)
+
         coord_vp1 = transform(self.normalized[0])
         coord_vp2 = transform(self.normalized[1])
 
@@ -284,7 +286,8 @@ class Polygon(GraphicObject):
         center = np.sum(self.vertices, 0) / len(self.vertices)
         return Vec2(center[0], center[1])
 
-    def draw(self,
+    def draw(
+            self,
             cr: Context,
             viewport: Viewport,
             transform: TransformType = identity
