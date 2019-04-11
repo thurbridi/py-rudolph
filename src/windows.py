@@ -300,6 +300,7 @@ class MainWindowHandler:
                 }[self.rotation_ref]
 
                 obj.rotate(*args, ref)
+            obj.normalize(angle=self.window_angle, window=self.world_window)
 
         self.window.queue_draw()
 
@@ -310,11 +311,15 @@ class MainWindowHandler:
         return (self.display_file[int(str(index))] for index in rows)
 
     def add_object(self, obj: GraphicObject):
+        window = self.world_window or Rect(Vec2(-100, -100), Vec2(100, 100))
+
+        obj.normalize(self.window_angle, window=window)
         self.display_file.append(obj)
         self.object_store.append([
             obj.name,
             str(f'<{type(obj).__name__}>')
         ])
+
 
     def on_toggle_fixed_window(self, checkbox: Gtk.ToggleButton):
         editable = checkbox.get_active()
