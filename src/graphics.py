@@ -11,7 +11,9 @@ import cairo
 import numpy as np
 from cairo import Context
 
-np.set_printoptions(formatter={'float': lambda x: "{0:0.2f}, ".format(x)})
+
+np.set_printoptions(formatter={'float': lambda x: '{0:0.2f}, '.format(x)})
+
 
 class Vec2(np.ndarray):
     def __new__(cls, x: float = 0, y: float = 0):
@@ -70,14 +72,8 @@ class Rect:
         self.max += offset
 
     def rotate(self, angle: float):
-        angle = radians(angle)
-        rot_matrix = np.array([
-            cos(angle), -sin(angle),
-            sin(angle), cos(angle),
-        ]).reshape(2, 2)
-
-        self.min = self.min @ rot_matrix
-        self.max = self.max @ rot_matrix
+        self.min = self.min @ rotation_matrix(angle)
+        self.max = self.max @ rotation_matrix(angle)
 
     def zoom(self, amount: float):
         self.max *= amount
@@ -193,11 +189,6 @@ class Point(GraphicObject):
             viewport.region.width, viewport.region.height
         )
 
-        # print('Point.draw():')
-        # print(f'    >>> normalized: {self.normalized}')
-        # print(f'    >>> viewport region: {viewport.region.max}')
-        # print(f'    >>> normalized²: {coord_vp}')
-
         coord_vp = transform(coord_vp)
         cr.move_to(coord_vp.x, coord_vp.y)
         cr.arc(coord_vp.x, coord_vp.y, 1, 0, 2 * np.pi)
@@ -212,12 +203,14 @@ class Point(GraphicObject):
 
     def normalize(self, angle: float, window: Rect):
         center = window.center()
-        rot_matrix = (
-            offset_matrix(-center.x, center.y) @
+
+        norm_matrix = (
+            offset_matrix(-center.x, -center.y) @
             rotation_matrix(angle) @
             offset_matrix(center.x, center.y)
         )
-        self.normalized = normalize(self.pos @ rot_matrix)
+
+        self.normalized = normalize(self.pos @ norm_matrix)
 
 
 class Line(GraphicObject):
@@ -225,6 +218,7 @@ class Line(GraphicObject):
         super().__init__(name)
         self.start = start
         self.end = end
+        self.normalize(0, Rect(min=Vec2(), max=Vec2()))
 
     @property
     def x1(self):
@@ -247,8 +241,9 @@ class Line(GraphicObject):
             viewport: Viewport,
             transform: TransformType = identity
     ):
-        coord_vp1 = transform(self.start)
-        coord_vp2 = transform(self.end)
+        scale = scale_matrix(viewport.region.width, viewport.region.height)
+        coord_vp1 = transform(self.normalized[0])
+        coord_vp2 = transform(self.normalized[1])
 
         cr.move_to(coord_vp1.x, coord_vp1.y)
         cr.line_to(coord_vp2.x, coord_vp2.y)
@@ -264,14 +259,17 @@ class Line(GraphicObject):
 
     def normalize(self, angle: float, window: Rect):
         center = window.center()
-        rot_matrix = (
-            offset_matrix(-center.x, center.y) @
-            rotation_matrix(angle) @
+        rot_matrix = rotation_matrix(angle)
+
+        norm_matrix = (
+            offset_matrix(-center.x, -center.y) @
+            rot_matrix @
             offset_matrix(center.x, center.y)
         )
+
         self.normalized = [
-            normalize(rot_matrix @ self.start),
-            normalize(rot_matrix @ self.end)
+            normalize(self.start @ norm_matrix),
+            normalize(self.end @ norm_matrix)
         ]
 
 
@@ -279,6 +277,7 @@ class Polygon(GraphicObject):
     def __init__(self, vertices, name=''):
         self.name = name
         self.vertices = vertices
+        self.normalized = self.vertices
 
     @property
     def centroid(self):
@@ -290,12 +289,12 @@ class Polygon(GraphicObject):
             viewport: Viewport,
             transform: TransformType = identity
     ):
-        start = self.vertices[0, :]
+        start = self.normalized[0]
         start_vp = transform(Vec2(start[0], start[1]))
         cr.move_to(start_vp.x, start_vp.y)
 
         for i in range(1, len(self.vertices)):
-            next = self.vertices[i]
+            next = self.normalized[i]
             next_vp = transform(Vec2(next[0], next[1]))
 
             cr.line_to(next_vp.x, next_vp.y)
@@ -309,7 +308,17 @@ class Polygon(GraphicObject):
             self.vertices[i] = vertex @ matrix
 
     def normalize(self, angle: float, window: Rect):
-        pass
+        center = window.center()
+        norm_matrix = (
+            offset_matrix(-center.x, -center.y) @
+            rotation_matrix(angle) @
+            offset_matrix(center.x, center.y)
+        )
+
+        self.normalized = np.array([
+            vertex @ norm_matrix
+            for vertex in self.vertices
+        ], dtype=float)
 
 
 @dataclass

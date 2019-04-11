@@ -127,6 +127,13 @@ class MainWindowHandler:
             name='poly'
         ))
 
+        self.add_object(
+            Line(Vec2(0, -100), Vec2(0, 100), name='y-axis')
+        )
+        self.add_object(
+            Line(Vec2(-100, 0), Vec2(100, 0), name='x-axis')
+        )
+
     def on_destroy(self, *args):
         self.window.get_application().quit()
 
@@ -138,10 +145,11 @@ class MainWindowHandler:
 
     def on_resize(self, widget: Gtk.Widget, allocation: Gdk.Rectangle):
         if self.world_window is None:
+            w, h = allocation.width, allocation.height
             self.old_size = allocation
             self.world_window = Rect(
-                Vec2(0, 0),
-                Vec2(allocation.width, allocation.height)
+                Vec2(-w / 2, -h / 2),
+                Vec2(w / 2, h / 2)
             )
 
         w_proportion = allocation.width / self.old_size.width
@@ -165,8 +173,10 @@ class MainWindowHandler:
                 (1 - ((v.y - self.world_window.min.y) / window_h)) * vp_h
             )
 
-        vp_w = widget.get_allocated_width()
-        vp_h = widget.get_allocated_height()
+        margin = 10
+
+        vp_w = widget.get_allocated_width() - margin
+        vp_h = widget.get_allocated_height() - margin
 
         cr.set_line_width(2.0)
         cr.paint()
@@ -175,15 +185,29 @@ class MainWindowHandler:
         window_w = self.world_window.width
         window_h = self.world_window.height
 
-        for obj in self.display_file:
-            obj.draw(
-                cr,
-                graphics.Viewport(
-                    region=Rect(min=Vec2(0, 0), max=Vec2(vp_w, vp_h)),
-                    window=self.world_window,
-                ),
-                window_to_viewport
-            )
+        viewport = graphics.Viewport(
+            region=Rect(min=Vec2(0, 0), max=Vec2(vp_w, vp_h)),
+            window=self.world_window,
+        )
+
+        cr.set_source_rgb(0.4, 0.8, 1.0)
+        self.display_file[0].draw(cr, viewport, window_to_viewport)
+        cr.set_source_rgb(0.8, 0.0, 0.0)
+
+        for obj in self.display_file[1:]:
+            obj.draw(cr, viewport, window_to_viewport)
+
+        cr.set_source_rgb(0.0, 0.8, 0.0)
+        cr.move_to(margin, margin)
+        for x, y in [
+                (vp_w, margin),
+                (vp_w, vp_h),
+                (margin, vp_h),
+                (margin, margin),
+        ]:
+            cr.line_to(x, y)
+            cr.move_to(x, y)
+        cr.stroke()
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
@@ -191,11 +215,11 @@ class MainWindowHandler:
 
         if response == Gtk.ResponseType.OK:
             if dialog.new_object is not None:
-                self.log(f"Object added: <{type(dialog.new_object).__name__}>")
+                self.log(f'Object added: <{type(dialog.new_object).__name__}>')
                 self.add_object(dialog.new_object)
                 self.builder.get_object('drawing_area').queue_draw()
             else:
-                self.log("ERROR: invalid object")
+                self.log('ERROR: invalid object')
 
     def on_quit(self, widget):
         self.window.close()
@@ -412,15 +436,14 @@ class MainWindowHandler:
 
     def on_clicked_rotate_window(self, widget: Gtk.Button):
         self.normalize(angle=int(self.builder.get_object('window-rot-entry').get_text()))
+        self.window.queue_draw()
 
     def normalize(self, angle: float):
-        print('self.normalize:')
+        print('>>> self.normalize()')
         window_size = (self.world_window.width, self.world_window.height)
         print(f'window: {self.world_window}')
-        normalized = [
+        for obj in self.display_file:
             obj.normalize(angle, window=self.world_window)
-            for obj in self.display_file
-        ]
 
 
 class MainWindow(Gtk.ApplicationWindow):
