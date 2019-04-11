@@ -114,6 +114,7 @@ class MainWindowHandler:
         self.object_store = builder.get_object('object_store')
         self.display_file = []
         self.world_window = None
+        self.window_angle = 0
         self.output_buffer = builder.get_object('outputbuffer')
         self.press_start = None
         self.old_size = None
@@ -286,10 +287,8 @@ class MainWindowHandler:
         for obj in self.selected_objs():
             if op == 'translate':
                 obj.translate(*args)
-
             elif op == 'scale':
                 obj.scale(*args)
-
             elif op == 'rotate':
                 try:
                     abs_x = int(entry_text(self, 'rotation-ref-x'))
@@ -428,16 +427,15 @@ class MainWindowHandler:
             file_chooser.destroy()
 
     def on_clicked_rotate_window(self, widget: Gtk.Button):
-        self.normalize(
-            angle=int(entry_text(self, 'window-rot-entry'))
-        )
+        self.window_angle += int(entry_text(self, 'window-rot-entry'))
+        self.normalize()
         self.window.queue_draw()
 
-    def normalize(self, angle: float):
+    def normalize(self):
         window_size = (self.world_window.width, self.world_window.height)
 
         for obj in self.display_file:
-            obj.normalize(angle, window=self.world_window)
+            obj.normalize(self.window_angle, window=self.world_window)
 
 
 class MainWindow(Gtk.ApplicationWindow):
