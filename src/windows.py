@@ -33,6 +33,10 @@ BUTTON_EVENTS = {
 }
 
 
+def entry_text(handler, entry_id: str) -> str:
+    return handler.builder.get_object(entry_id).get_text()
+
+
 class RotationRef(Enum):
     CENTER = auto()
     ORIGIN = auto()
@@ -50,18 +54,18 @@ class NewObjectDialogHandler:
         notebook = self.builder.get_object('notebook1')
 
         page_num = notebook.get_current_page()
-        name = self.builder.get_object('entry_name').get_text()
+        name = entry_text(self, 'entry_name')
 
         if NB_PAGES[page_num] == 'point':
-            x = float(self.builder.get_object('entryX').get_text())
-            y = float(self.builder.get_object('entryY').get_text())
+            x = float(entry_text(self, 'entryX'))
+            y = float(entry_text(self, 'entryY'))
 
             self.dialog.new_object = Point(Vec2(x, y), name=name)
         elif NB_PAGES[page_num] == 'line':
-            y2 = float(self.builder.get_object('entryY2').get_text())
-            x1 = float(self.builder.get_object('entryX1').get_text())
-            y1 = float(self.builder.get_object('entryY1').get_text())
-            x2 = float(self.builder.get_object('entryX2').get_text())
+            y2 = float(entry_text(self, 'entryY2'))
+            x1 = float(entry_text(self, 'entryX1'))
+            y1 = float(entry_text(self, 'entryY1'))
+            x2 = float(entry_text(self, 'entryX2'))
 
             self.dialog.new_object = Line(
                 Vec2(x1, y1),
@@ -83,8 +87,8 @@ class NewObjectDialogHandler:
     def on_add_point(self, widget):
         vertice_store = self.builder.get_object('vertice_store')
 
-        x = float(self.builder.get_object('entryX3').get_text())
-        y = float(self.builder.get_object('entryY3').get_text())
+        x = float(entry_text(self, 'entryX3'))
+        y = float(entry_text(self, 'entryY3'))
 
         vertice_store.append([x, y, 1])
         self.vertices.append(Vec2(x, y))
@@ -128,20 +132,20 @@ class MainWindowHandler:
         ))
 
         self.add_object(
-            Line(Vec2(0, -100), Vec2(0, 100), name='y-axis')
-        )
-        self.add_object(
             Line(Vec2(-100, 0), Vec2(100, 0), name='x-axis')
         )
-
-    def on_destroy(self, *args):
-        self.window.get_application().quit()
+        self.add_object(
+            Line(Vec2(0, -100), Vec2(0, 100), name='y-axis')
+        )
 
     def log(self, msg: str):
         self.output_buffer.insert_at_cursor(f'{msg}\n')
         scrollwindow = self.builder.get_object('output_scrollwindow')
         adjustment = scrollwindow.get_vadjustment()
         adjustment.set_value(adjustment.get_upper())
+
+    def on_destroy(self, *args):
+        self.window.get_application().quit()
 
     def on_resize(self, widget: Gtk.Widget, allocation: Gdk.Rectangle):
         if self.world_window is None:
@@ -299,8 +303,8 @@ class MainWindowHandler:
 
             elif op == 'rotate':
                 try:
-                    abs_x = int(self.builder.get_object('rotation-ref-x').get_text())
-                    abs_y = int(self.builder.get_object('rotation-ref-y').get_text())
+                    abs_x = int(entry_text(self, 'rotation-ref-x'))
+                    abs_y = int(entry_text(self, 'rotation-ref-y'))
                 except:
                     abs_x = 0
                     abs_y = 0
@@ -435,13 +439,14 @@ class MainWindowHandler:
             file_chooser.destroy()
 
     def on_clicked_rotate_window(self, widget: Gtk.Button):
-        self.normalize(angle=int(self.builder.get_object('window-rot-entry').get_text()))
+        self.normalize(
+            angle=int(entry_text(self, 'window-rot-entry'))
+        )
         self.window.queue_draw()
 
     def normalize(self, angle: float):
-        print('>>> self.normalize()')
         window_size = (self.world_window.width, self.world_window.height)
-        print(f'window: {self.world_window}')
+
         for obj in self.display_file:
             obj.normalize(angle, window=self.world_window)
 
