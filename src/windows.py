@@ -170,17 +170,27 @@ class MainWindowHandler:
 
         self.old_size = allocation
 
+    def viewport(self) -> graphics.Viewport:
+        widget = self.builder.get_object('drawing_area')
+        return graphics.Viewport(
+            region=Rect(
+                min=Vec2(0, 0),
+                max=Vec2(
+                    widget.get_allocated_width(),
+                    widget.get_allocated_height(),
+                ),
+            ).with_margin(10),
+            window=self.world_window,
+        )
+
     def on_draw(self, widget, cr):
         def window_to_viewport(v: Vec2):
             return Vec2(
-                ((v.x - self.world_window.min.x) / window_w) * vp_w,
-                (1 - ((v.y - self.world_window.min.y) / window_h)) * vp_h
+                ((v.x - self.world_window.min.x) / window_w) * viewport.width,
+                (1 - ((v.y - self.world_window.min.y) / window_h)) * viewport.height
             )
 
-        margin = 10
-
-        vp_w = widget.get_allocated_width() - margin
-        vp_h = widget.get_allocated_height() - margin
+        viewport = self.viewport()
 
         cr.set_line_width(2.0)
         cr.paint()
@@ -189,11 +199,6 @@ class MainWindowHandler:
         window_w = self.world_window.width
         window_h = self.world_window.height
 
-        viewport = graphics.Viewport(
-            region=Rect(min=Vec2(0, 0), max=Vec2(vp_w, vp_h)),
-            window=self.world_window,
-        )
-
         cr.set_source_rgb(0.4, 0.8, 1.0)
         self.display_file[0].draw(cr, viewport, window_to_viewport)
         cr.set_source_rgb(0.8, 0.0, 0.0)
@@ -201,17 +206,7 @@ class MainWindowHandler:
         for obj in self.display_file[1:]:
             obj.draw(cr, viewport, window_to_viewport)
 
-        cr.set_source_rgb(0.0, 0.8, 0.0)
-        cr.move_to(margin, margin)
-        for x, y in [
-                (vp_w, margin),
-                (vp_w, vp_h),
-                (margin, vp_h),
-                (margin, margin),
-        ]:
-            cr.line_to(x, y)
-            cr.move_to(x, y)
-        cr.stroke()
+        viewport.draw(cr)
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
@@ -232,7 +227,7 @@ class MainWindowHandler:
         about_dialog = Gtk.AboutDialog(
             None,
             authors=['Arthur Bridi Guazzelli', 'João Paulo T. I. Z.'],
-            version='1.3.0',
+            version='1.3.1',
             program_name='Rudolph'
         )
         about_dialog.run()
@@ -245,17 +240,11 @@ class MainWindowHandler:
 
     def on_motion(self, widget, event):
         def viewport_to_window(v: Vec2):
-            margin = 10
-
-            window_w = self.world_window.width
-            window_h = self.world_window.height
-
-            vp_w = widget.get_allocated_width() - margin
-            vp_h = widget.get_allocated_height() - margin
+            viewport = self.viewport()
 
             return Vec2(
-                (v.x / vp_w) * window_w,
-                (v.y / vp_h) * window_h
+                (v.x / viewport.width) * self.world_window.width,
+                (v.y / viewport.height) * self.world_window.height
             )
 
         # register x, y

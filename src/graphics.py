@@ -58,11 +58,11 @@ class Rect:
     max: Vec2
 
     @property
-    def width(self):
+    def width(self) -> float:
         return self.max.x - self.min.x
 
     @property
-    def height(self):
+    def height(self) -> float:
         return self.max.y - self.min.y
 
     def offset(self, offset: Vec2):
@@ -80,6 +80,12 @@ class Rect:
     def center(self) -> Vec2:
         return (self.max + self.min) / 2
 
+    def with_margin(self, margin: float) -> 'Rect':
+        return Rect(
+            self.min + Vec2(margin, margin),
+            self.max - Vec2(margin, margin),
+        )
+
 
 @dataclass
 class Viewport:
@@ -87,14 +93,22 @@ class Viewport:
     window: Rect
 
     @property
-    def min(self):
+    def min(self) -> float:
         return self.region.min
 
     @property
-    def max(self):
+    def max(self) -> float:
         return self.region.max
 
-    def transform(self, p: Vec2):
+    @property
+    def width(self) -> float:
+        return self.region.width
+
+    @property
+    def height(self) -> float:
+        return self.region.height
+
+    def transform(self, p: Vec2) -> Vec2:
         if not isinstance(p, Vec2):
             p = Vec2(p[0], p[1])
 
@@ -112,6 +126,22 @@ class Viewport:
             (p.x - self.min.x) * view_size.x / win_size.x,
             (p.y - self.min.y) * view_size.y / win_size.y,
         )
+
+    def draw(self, cr: Context):
+        _min = self.min
+        _max = self.max
+
+        cr.set_source_rgb(0.0, 0.8, 0.0)
+        cr.move_to(_min.x, _min.y)
+        for x, y in [
+                (_max.x, _min.y),
+                (_max.x, _max.y),
+                (_min.x, _max.y),
+                (_min.x, _min.y),
+        ]:
+            cr.line_to(x, y)
+            cr.move_to(x, y)
+        cr.stroke()
 
 
 class GraphicObject(ABC):
