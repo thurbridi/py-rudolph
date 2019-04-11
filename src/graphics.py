@@ -348,10 +348,10 @@ class Polygon(GraphicObject):
             offset_matrix(center.x, center.y)
         )
 
-        self.normalized = np.array([
+        self.normalized = [
             vertex @ norm_matrix
             for vertex in self.vertices
-        ], dtype=float)
+        ]
 
 
 @dataclass
