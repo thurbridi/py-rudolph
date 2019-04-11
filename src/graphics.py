@@ -211,7 +211,7 @@ class Line(GraphicObject):
 class Polygon(GraphicObject):
     def __init__(self, vertices, name=''):
         self.name = name
-        self.vertices = np.array(vertices, dtype=float)
+        self.vertices = vertices
 
     @property
     def centroid(self):
@@ -219,12 +219,12 @@ class Polygon(GraphicObject):
         return Vec2(center[0], center[1])
 
     def draw(self, cr: cairo.Context, transform=lambda v: v):
-        start = self.vertices[0, :]
+        start = self.vertices[0]
         start_vp = transform(Vec2(start[0], start[1]))
         cr.move_to(start_vp.x, start_vp.y)
 
         for i in range(1, len(self.vertices)):
-            next = self.vertices[i, :]
+            next = self.vertices[i]
             next_vp = transform(Vec2(next[0], next[1]))
 
             cr.line_to(next_vp.x, next_vp.y)
@@ -240,5 +240,5 @@ class Polygon(GraphicObject):
 
 @dataclass
 class Scene:
-    window: Rect
     objs: List[GraphicObject]
+    window: Rect = None
