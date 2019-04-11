@@ -10,7 +10,10 @@ from graphics import (
     Polygon,
     Rect,
     Vec2,
+    Scene,
 )
+
+from cgcodecs import ObjCodec
 
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
@@ -110,6 +113,7 @@ class MainWindowHandler:
         self.press_start = None
         self.old_size = None
         self.rotation_ref = RotationRef.CENTER
+        self.current_file = None
 
         self.add_object(Point(Vec2(0, 0), name='origin'))
         self.add_object(Line(Vec2(200, 200), Vec2(100, 150), name='line'))
@@ -296,6 +300,93 @@ class MainWindowHandler:
                 if w.get_name() == 'rotate-ref-abs':
                     self.builder.get_object('rotation-ref-x').set_editable(True)
                     self.builder.get_object('rotation-ref-y').set_editable(True)
+
+    def on_new_file(self, item):
+        self.log('NEW FILE')
+        # Translate world_window center to (0, 0) and wipe display_file
+        self.display_file.clear()
+        self.object_store.clear()
+        self.current_file = None
+        self.builder.get_object('drawing_area').queue_draw()
+
+    def on_open_file(self, item):
+        file_chooser = Gtk.FileChooserDialog(
+            title='Open File',
+            parent=self.window,
+            action=Gtk.FileChooserAction.OPEN,
+            buttons=(
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN, Gtk.ResponseType.OK
+            )
+        )
+
+        filter = Gtk.FileFilter()
+        filter.set_name('CG OBJ')
+        filter.add_pattern('*.obj')
+        file_chooser.add_filter(filter)
+
+        response = file_chooser.run()
+        if response == Gtk.ResponseType.OK:
+            self.log('OPEN FILE:')
+            path = file_chooser.get_filename()
+            self.log(path)
+            file = open(path)
+            contents = file.read()
+            scene = ObjCodec.decode(contents)
+            self.display_file.clear()
+            self.object_store.clear()
+            for obj in scene.objs:
+                self.add_object(obj)
+
+            self.log(f'{contents}\n')
+            file.close()
+            self.current_file = path
+            self.builder.get_object('drawing_area').queue_draw()
+
+        file_chooser.destroy()
+
+    def on_save_file(self, item):
+        label = item.get_label()
+        if label == 'gtk-save' and self.current_file is not None:
+            file = open(self.current_file, 'w+')
+            scene = Scene(window=self.world_window, objs=self.display_file)
+            contents = ObjCodec.encode(scene)
+            file.write(contents)
+            file.close()
+
+        elif label == 'gtk-save-as' or self.current_file is None:
+            file_chooser = Gtk.FileChooserDialog(
+                title='Save File',
+                parent=self.window,
+                action=Gtk.FileChooserAction.SAVE,
+                buttons=(
+                    Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                    Gtk.STOCK_SAVE_AS, Gtk.ResponseType.OK
+                )
+            )
+
+            filter = Gtk.FileFilter()
+            filter.set_name('CG OBJ')
+            filter.add_pattern('*.obj')
+            file_chooser.add_filter(filter)
+
+            file_chooser.set_current_name('untitled.obj')
+
+            response = file_chooser.run()
+            if response == Gtk.ResponseType.OK:
+                if label == 'gtk-save':
+                    self.log('SAVE FILE:')
+                elif label == 'gtk-save-as':
+                    self.log('SAVE AS FILE:')
+                path = file_chooser.get_filename()
+                self.log(path)
+                file = open(path, 'w+')
+                scene = Scene(window=self.world_window, objs=self.display_file)
+                contents = ObjCodec.encode(scene)
+                file.write(contents)
+                file.close()
+                self.current_file = path
+            file_chooser.destroy()
 
 
 class MainWindow(Gtk.ApplicationWindow):
