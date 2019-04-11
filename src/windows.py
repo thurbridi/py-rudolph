@@ -330,7 +330,8 @@ class MainWindowHandler:
             self.log(path)
             file = open(path)
             contents = file.read()
-            ObjCodec.decode(contents)
+            scene = ObjCodec.decode(contents)
+            self.display_file = scene.objs
             self.log(f'{contents}\n')
             file.close()
             self.current_file = path
@@ -369,7 +370,7 @@ class MainWindowHandler:
                 path = file_chooser.get_filename()
                 self.log(path)
                 file = open(path, 'w+')
-                scene = Scene(self.world_window, self.display_file)
+                scene = Scene(window=self.world_window, objs=self.display_file)
                 contents = ObjCodec.encode(scene)
                 file.write(contents)
                 file.close()
