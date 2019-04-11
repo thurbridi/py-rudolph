@@ -46,9 +46,7 @@ class ObjCodec:
                 objects_txt += f'l {indexes}\n'
                 idx += n
 
-        file_contents = vertices_txt + objects_txt
-
-        return file_contents
+        return vertices_txt + objects_txt
 
     @classmethod
     def decode(cls, obj_file: str) -> Scene:
