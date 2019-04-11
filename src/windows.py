@@ -305,10 +305,11 @@ class MainWindowHandler:
         self.log('NEW FILE')
         # Translate world_window center to (0, 0) and wipe display_file
         self.display_file.clear()
+        self.object_store.clear()
         self.current_file = None
+        self.builder.get_object('drawing_area').queue_draw()
 
     def on_open_file(self, item):
-        self.log('OPEN FILE:')
         file_chooser = Gtk.FileChooserDialog(
             title='Open File',
             parent=self.window,
@@ -326,28 +327,34 @@ class MainWindowHandler:
 
         response = file_chooser.run()
         if response == Gtk.ResponseType.OK:
+            self.log('OPEN FILE:')
             path = file_chooser.get_filename()
             self.log(path)
             file = open(path)
             contents = file.read()
             scene = ObjCodec.decode(contents)
-            self.display_file = scene.objs
+            self.display_file.clear()
+            self.object_store.clear()
+            for obj in scene.objs:
+                self.add_object(obj)
+
             self.log(f'{contents}\n')
             file.close()
             self.current_file = path
+            self.builder.get_object('drawing_area').queue_draw()
+
         file_chooser.destroy()
 
     def on_save_file(self, item):
         label = item.get_label()
         if label == 'gtk-save' and self.current_file is not None:
-            self.log('SAVE FILE')
             file = open(self.current_file, 'w+')
-            scene = Scene(self.world_window, self.display_file)
+            scene = Scene(window=self.world_window, objs=self.display_file)
             contents = ObjCodec.encode(scene)
             file.write(contents)
+            file.close()
 
         elif label == 'gtk-save-as' or self.current_file is None:
-            self.log('SAVE AS FILE:')
             file_chooser = Gtk.FileChooserDialog(
                 title='Save File',
                 parent=self.window,
@@ -367,6 +374,10 @@ class MainWindowHandler:
 
             response = file_chooser.run()
             if response == Gtk.ResponseType.OK:
+                if label == 'gtk-save':
+                    self.log('SAVE FILE:')
+                elif label == 'gtk-save-as':
+                    self.log('SAVE AS FILE:')
                 path = file_chooser.get_filename()
                 self.log(path)
                 file = open(path, 'w+')
