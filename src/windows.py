@@ -110,6 +110,7 @@ class MainWindowHandler:
         self.press_start = None
         self.old_size = None
         self.rotation_ref = RotationRef.CENTER
+        self.current_file = None
 
         self.add_object(Point(Vec2(0, 0), name='origin'))
         self.add_object(Line(Vec2(200, 200), Vec2(100, 150), name='line'))
@@ -300,6 +301,8 @@ class MainWindowHandler:
     def on_new_file(self, item):
         self.log('NEW FILE')
         # Translate world_window center to (0, 0) and wipe display_file
+        self.display_file.clear()
+        self.current_file = None
 
     def on_open_file(self, item):
         self.log('OPEN FILE:')
@@ -325,14 +328,43 @@ class MainWindowHandler:
             file = open(path)
             contents = file.read()
             self.log(f'{contents}\n')
+            file.close()
+            self.current_file = path
         file_chooser.destroy()
 
     def on_save_file(self, item):
         label = item.get_label()
-        if label == 'gtk-save':
+        if label == 'gtk-save' and self.current_file is not None:
             self.log('SAVE FILE')
-        elif label == 'gtk-save-as':
-            self.log('SAVE AS FILE')
+
+        elif label == 'gtk-save-as' or self.current_file is None:
+            self.log('SAVE AS FILE:')
+            file_chooser = Gtk.FileChooserDialog(
+                title='Save File',
+                parent=self.window,
+                action=Gtk.FileChooserAction.SAVE,
+                buttons=(
+                    Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                    Gtk.STOCK_SAVE_AS, Gtk.ResponseType.OK
+                )
+            )
+
+            filter = Gtk.FileFilter()
+            filter.set_name('CG OBJ')
+            filter.add_pattern('*.obj')
+            file_chooser.add_filter(filter)
+
+            file_chooser.set_current_name('untitled.obj')
+
+            response = file_chooser.run()
+            if response == Gtk.ResponseType.OK:
+                path = file_chooser.get_filename()
+                self.log(path)
+                file = open(path, 'w+')
+                file.write('Hello World!')
+                file.close()
+                self.current_file = path
+            file_chooser.destroy()
 
 
 class MainWindow(Gtk.ApplicationWindow):
