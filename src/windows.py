@@ -200,11 +200,7 @@ class MainWindowHandler:
         window_w = self.world_window.width
         window_h = self.world_window.height
 
-        cr.set_source_rgb(0.4, 0.8, 1.0)
-        self.display_file[0].draw(cr, viewport, window_to_viewport)
-        cr.set_source_rgb(0.8, 0.0, 0.0)
-
-        for obj in self.display_file[1:]:
+        for obj in self.display_file:
             obj.draw(cr, viewport, window_to_viewport)
 
         viewport.draw(cr)
