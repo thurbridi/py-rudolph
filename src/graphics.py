@@ -240,7 +240,7 @@ class Point(GraphicObject):
             offset_matrix(center.x, center.y)
         )
 
-        self.normalized = normalize(self.pos @ norm_matrix)
+        self.normalized = self.pos @ norm_matrix
 
 
 class Line(GraphicObject):
@@ -300,8 +300,8 @@ class Line(GraphicObject):
         )
 
         self.normalized = [
-            normalize(self.start @ norm_matrix),
-            normalize(self.end @ norm_matrix)
+            self.start @ norm_matrix,
+            self.end @ norm_matrix
         ]
 
 
