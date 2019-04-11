@@ -10,7 +10,10 @@ from graphics import (
     Polygon,
     Rect,
     Vec2,
+    Scene,
 )
+
+from cgcodecs import ObjCodec
 
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
@@ -327,6 +330,7 @@ class MainWindowHandler:
             self.log(path)
             file = open(path)
             contents = file.read()
+            ObjCodec.decode(contents)
             self.log(f'{contents}\n')
             file.close()
             self.current_file = path
@@ -336,6 +340,10 @@ class MainWindowHandler:
         label = item.get_label()
         if label == 'gtk-save' and self.current_file is not None:
             self.log('SAVE FILE')
+            file = open(self.current_file, 'w+')
+            scene = Scene(self.world_window, self.display_file)
+            contents = ObjCodec.encode(scene)
+            file.write(contents)
 
         elif label == 'gtk-save-as' or self.current_file is None:
             self.log('SAVE AS FILE:')
@@ -361,7 +369,9 @@ class MainWindowHandler:
                 path = file_chooser.get_filename()
                 self.log(path)
                 file = open(path, 'w+')
-                file.write('Hello World!')
+                scene = Scene(self.world_window, self.display_file)
+                contents = ObjCodec.encode(scene)
+                file.write(contents)
                 file.close()
                 self.current_file = path
             file_chooser.destroy()
