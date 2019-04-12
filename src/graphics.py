@@ -131,7 +131,7 @@ class Viewport:
         _min = self.min
         _max = self.max
 
-        cr.set_source_rgb(0.0, 0.8, 0.0)
+        cr.set_source_rgb(0.4, 0.4, 0.4)
         cr.move_to(_min.x, _min.y)
         for x, y in [
                 (_max.x, _min.y),
