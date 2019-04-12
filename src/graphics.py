@@ -215,9 +215,7 @@ class Point(GraphicObject):
             viewport: Viewport,
             transform: TransformType = identity,
     ):
-        coord_vp = self.normalized @ scale_matrix(
-            viewport.region.width, viewport.region.height
-        )
+        coord_vp = self.normalized
 
         coord_vp = transform(coord_vp)
         cr.move_to(coord_vp.x, coord_vp.y)
@@ -236,7 +234,7 @@ class Point(GraphicObject):
 
         norm_matrix = (
             offset_matrix(-center.x, -center.y) @
-            rotation_matrix(angle) @
+            rotation_matrix(-angle) @
             offset_matrix(center.x, center.y)
         )
 
@@ -291,11 +289,10 @@ class Line(GraphicObject):
 
     def normalize(self, angle: float, window: Rect):
         center = window.center()
-        rot_matrix = rotation_matrix(angle)
 
         norm_matrix = (
             offset_matrix(-center.x, -center.y) @
-            rot_matrix @
+            rotation_matrix(-angle) @
             offset_matrix(center.x, center.y)
         )
 
@@ -344,7 +341,7 @@ class Polygon(GraphicObject):
         center = window.center()
         norm_matrix = (
             offset_matrix(-center.x, -center.y) @
-            rotation_matrix(angle) @
+            rotation_matrix(-angle) @
             offset_matrix(center.x, center.y)
         )
 
