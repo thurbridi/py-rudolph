@@ -3,6 +3,7 @@ from enum import auto, Enum
 import gi
 from gi.repository import Gtk, Gdk
 
+import graphics
 from graphics import (
     GraphicObject,
     Line,
@@ -14,6 +15,7 @@ from graphics import (
 )
 
 from cgcodecs import ObjCodec
+from transformations import rotation_matrix
 
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
@@ -30,6 +32,10 @@ BUTTON_EVENTS = {
     2: 'middle',
     3: 'right',
 }
+
+
+def entry_text(handler, entry_id: str) -> str:
+    return handler.builder.get_object(entry_id).get_text()
 
 
 class RotationRef(Enum):
@@ -49,18 +55,18 @@ class NewObjectDialogHandler:
         notebook = self.builder.get_object('notebook1')
 
         page_num = notebook.get_current_page()
-        name = self.builder.get_object('entry_name').get_text()
+        name = entry_text(self, 'entry_name')
 
         if NB_PAGES[page_num] == 'point':
-            x = float(self.builder.get_object('entryX').get_text())
-            y = float(self.builder.get_object('entryY').get_text())
+            x = float(entry_text(self, 'entryX'))
+            y = float(entry_text(self, 'entryY'))
 
             self.dialog.new_object = Point(Vec2(x, y), name=name)
         elif NB_PAGES[page_num] == 'line':
-            y2 = float(self.builder.get_object('entryY2').get_text())
-            x1 = float(self.builder.get_object('entryX1').get_text())
-            y1 = float(self.builder.get_object('entryY1').get_text())
-            x2 = float(self.builder.get_object('entryX2').get_text())
+            y2 = float(entry_text(self, 'entryY2'))
+            x1 = float(entry_text(self, 'entryX1'))
+            y1 = float(entry_text(self, 'entryY1'))
+            x2 = float(entry_text(self, 'entryX2'))
 
             self.dialog.new_object = Line(
                 Vec2(x1, y1),
@@ -82,8 +88,8 @@ class NewObjectDialogHandler:
     def on_add_point(self, widget):
         vertice_store = self.builder.get_object('vertice_store')
 
-        x = float(self.builder.get_object('entryX3').get_text())
-        y = float(self.builder.get_object('entryY3').get_text())
+        x = float(entry_text(self, 'entryX3'))
+        y = float(entry_text(self, 'entryY3'))
 
         vertice_store.append([x, y, 1])
         self.vertices.append(Vec2(x, y))
@@ -109,25 +115,12 @@ class MainWindowHandler:
         self.object_store = builder.get_object('object_store')
         self.display_file = []
         self.world_window = None
+        self.window_angle = 0
         self.output_buffer = builder.get_object('outputbuffer')
         self.press_start = None
         self.old_size = None
         self.rotation_ref = RotationRef.CENTER
         self.current_file = None
-
-        self.add_object(Point(Vec2(0, 0), name='origin'))
-        self.add_object(Line(Vec2(200, 200), Vec2(100, 150), name='line'))
-        self.add_object(Polygon(
-            [Vec2(400, 400), Vec2(500, 400), Vec2(450, 300)],
-            name='poly'
-        ))
-        self.add_object(Polygon(
-            [Vec2(100, 300), Vec2(200, 300), Vec2(200, 400), Vec2(100, 400)],
-            name='poly'
-        ))
-
-    def on_destroy(self, *args):
-        self.window.get_application().quit()
 
     def log(self, msg: str):
         self.output_buffer.insert_at_cursor(f'{msg}\n')
@@ -135,12 +128,16 @@ class MainWindowHandler:
         adjustment = scrollwindow.get_vadjustment()
         adjustment.set_value(adjustment.get_upper())
 
+    def on_destroy(self, *args):
+        self.window.get_application().quit()
+
     def on_resize(self, widget: Gtk.Widget, allocation: Gdk.Rectangle):
         if self.world_window is None:
+            w, h = allocation.width, allocation.height
             self.old_size = allocation
             self.world_window = Rect(
-                Vec2(0, 0),
-                Vec2(allocation.width, allocation.height)
+                Vec2(-w / 2, -h / 2),
+                Vec2(w / 2, h / 2)
             )
 
         w_proportion = allocation.width / self.old_size.width
@@ -157,15 +154,28 @@ class MainWindowHandler:
 
         self.old_size = allocation
 
+    def viewport(self) -> graphics.Viewport:
+        widget = self.builder.get_object('drawing_area')
+        return graphics.Viewport(
+            region=Rect(
+                min=Vec2(0, 0),
+                max=Vec2(
+                    widget.get_allocated_width(),
+                    widget.get_allocated_height(),
+                ),
+            ).with_margin(10),
+            window=self.world_window,
+        )
+
     def on_draw(self, widget, cr):
         def window_to_viewport(v: Vec2):
+            vw, vh = viewport.width, viewport.height
             return Vec2(
-                ((v.x - self.world_window.min.x) / window_w) * vp_w,
-                (1 - ((v.y - self.world_window.min.y) / window_h)) * vp_h
+                ((v.x - self.world_window.min.x) / window_w) * vw,
+                (1 - ((v.y - self.world_window.min.y) / window_h)) * vh
             )
 
-        vp_w = widget.get_allocated_width()
-        vp_h = widget.get_allocated_height()
+        viewport = self.viewport()
 
         cr.set_line_width(2.0)
         cr.paint()
@@ -174,8 +184,10 @@ class MainWindowHandler:
         window_w = self.world_window.width
         window_h = self.world_window.height
 
-        for object in self.display_file:
-            object.draw(cr, window_to_viewport)
+        for obj in self.display_file:
+            obj.draw(cr, viewport, window_to_viewport)
+
+        viewport.draw(cr)
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
@@ -183,11 +195,11 @@ class MainWindowHandler:
 
         if response == Gtk.ResponseType.OK:
             if dialog.new_object is not None:
-                self.log(f"Object added: <{type(dialog.new_object).__name__}>")
+                self.log(f'Object added: <{type(dialog.new_object).__name__}>')
                 self.add_object(dialog.new_object)
                 self.builder.get_object('drawing_area').queue_draw()
             else:
-                self.log("ERROR: invalid object")
+                self.log('ERROR: invalid object')
 
     def on_quit(self, widget):
         self.window.close()
@@ -196,7 +208,7 @@ class MainWindowHandler:
         about_dialog = Gtk.AboutDialog(
             None,
             authors=['Arthur Bridi Guazzelli', 'João Paulo T. I. Z.'],
-            version='1.3.0',
+            version='1.3.1',
             program_name='Rudolph'
         )
         about_dialog.run()
@@ -208,11 +220,19 @@ class MainWindowHandler:
             self.dragging = True
 
     def on_motion(self, widget, event):
+        def viewport_to_window(v: Vec2):
+            viewport = self.viewport()
+
+            return Vec2(
+                (v.x / viewport.width) * self.world_window.width,
+                (v.y / viewport.height) * self.world_window.height
+            )
+
         # register x, y
         # translate window
         if self.dragging:
             current = Vec2(-event.x, event.y)
-            delta = current - self.press_start
+            delta = viewport_to_window(current - self.press_start)
             self.press_start = current
             self.world_window.min += delta
             self.world_window.max += delta
@@ -246,16 +266,18 @@ class MainWindowHandler:
 
         for obj in self.selected_objs():
             if op == 'translate':
+                args[0] = (
+                    args[0] @
+                    rotation_matrix(self.window_angle)
+                )
                 obj.translate(*args)
-
             elif op == 'scale':
                 obj.scale(*args)
-
             elif op == 'rotate':
                 try:
-                    abs_x = int(self.builder.get_object('rotation-ref-x').get_text())
-                    abs_y = int(self.builder.get_object('rotation-ref-y').get_text())
-                except:
+                    abs_x = int(entry_text(self, 'rotation-ref-x'))
+                    abs_y = int(entry_text(self, 'rotation-ref-y'))
+                except ValueError:
                     abs_x = 0
                     abs_y = 0
 
@@ -266,6 +288,7 @@ class MainWindowHandler:
                 }[self.rotation_ref]
 
                 obj.rotate(*args, ref)
+            obj.normalize(angle=self.window_angle, window=self.world_window)
 
         self.window.queue_draw()
 
@@ -276,6 +299,9 @@ class MainWindowHandler:
         return (self.display_file[int(str(index))] for index in rows)
 
     def add_object(self, obj: GraphicObject):
+        window = self.world_window or Rect(Vec2(-100, -100), Vec2(100, 100))
+
+        obj.normalize(self.window_angle, window=window)
         self.display_file.append(obj)
         self.object_store.append([
             obj.name,
@@ -298,8 +324,8 @@ class MainWindowHandler:
                     'rotate-ref-abs': RotationRef.ABSOLUTE,
                 }[w.get_name()]
                 if w.get_name() == 'rotate-ref-abs':
-                    self.builder.get_object('rotation-ref-x').set_editable(True)
-                    self.builder.get_object('rotation-ref-y').set_editable(True)
+                    for _id in 'rotation-ref-x', 'rotation-ref-y':
+                        self.builder.get_object(_id).set_editable(True)
 
     def on_new_file(self, item):
         self.log('NEW FILE')
@@ -387,6 +413,15 @@ class MainWindowHandler:
                 file.close()
                 self.current_file = path
             file_chooser.destroy()
+
+    def on_clicked_rotate_window(self, widget: Gtk.Button):
+        self.window_angle += int(entry_text(self, 'window-rot-entry'))
+        self.normalize()
+        self.window.queue_draw()
+
+    def normalize(self):
+        for obj in self.display_file:
+            obj.normalize(self.window_angle, window=self.world_window)
 
 
 class MainWindow(Gtk.ApplicationWindow):
