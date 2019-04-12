@@ -15,6 +15,7 @@ from graphics import (
 )
 
 from cgcodecs import ObjCodec
+from transformations import rotation_matrix
 
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
@@ -265,6 +266,10 @@ class MainWindowHandler:
 
         for obj in self.selected_objs():
             if op == 'translate':
+                args[0] = (
+                    args[0] @
+                    rotation_matrix(self.window_angle)
+                )
                 obj.translate(*args)
             elif op == 'scale':
                 obj.scale(*args)
