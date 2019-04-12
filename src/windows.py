@@ -121,24 +121,6 @@ class MainWindowHandler:
         self.rotation_ref = RotationRef.CENTER
         self.current_file = None
 
-        self.add_object(Point(Vec2(0, 0), name='origin'))
-        self.add_object(Line(Vec2(200, 200), Vec2(100, 150), name='line'))
-        self.add_object(Polygon(
-            [Vec2(400, 400), Vec2(500, 400), Vec2(450, 300)],
-            name='poly'
-        ))
-        self.add_object(Polygon(
-            [Vec2(100, 300), Vec2(200, 300), Vec2(200, 400), Vec2(100, 400)],
-            name='poly'
-        ))
-
-        self.add_object(
-            Line(Vec2(-100, 0), Vec2(100, 0), name='x-axis')
-        )
-        self.add_object(
-            Line(Vec2(0, -100), Vec2(0, 100), name='y-axis')
-        )
-
     def log(self, msg: str):
         self.output_buffer.insert_at_cursor(f'{msg}\n')
         scrollwindow = self.builder.get_object('output_scrollwindow')
