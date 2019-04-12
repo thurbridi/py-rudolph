@@ -2,7 +2,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, List
-from math import cos, sin, radians
 
 from transformations import offset_matrix, scale_matrix, rotation_matrix
 
@@ -270,8 +269,6 @@ class Line(GraphicObject):
             viewport: Viewport,
             transform: TransformType = identity
     ):
-        scale = scale_matrix(viewport.region.width, viewport.region.height)
-
         coord_vp1 = transform(self.normalized[0])
         coord_vp2 = transform(self.normalized[1])
 

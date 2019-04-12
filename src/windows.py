@@ -168,9 +168,10 @@ class MainWindowHandler:
 
     def on_draw(self, widget, cr):
         def window_to_viewport(v: Vec2):
+            vw, vh = viewport.width, viewport.height
             return Vec2(
-                ((v.x - self.world_window.min.x) / window_w) * viewport.width,
-                (1 - ((v.y - self.world_window.min.y) / window_h)) * viewport.height
+                ((v.x - self.world_window.min.x) / window_w) * vw,
+                (1 - ((v.y - self.world_window.min.y) / window_h)) * vh
             )
 
         viewport = self.viewport()
@@ -271,7 +272,7 @@ class MainWindowHandler:
                 try:
                     abs_x = int(entry_text(self, 'rotation-ref-x'))
                     abs_y = int(entry_text(self, 'rotation-ref-y'))
-                except:
+                except ValueError:
                     abs_x = 0
                     abs_y = 0
 
@@ -302,7 +303,6 @@ class MainWindowHandler:
             str(f'<{type(obj).__name__}>')
         ])
 
-
     def on_toggle_fixed_window(self, checkbox: Gtk.ToggleButton):
         editable = checkbox.get_active()
         for widget_id in ['window-width', 'window-height']:
@@ -319,8 +319,8 @@ class MainWindowHandler:
                     'rotate-ref-abs': RotationRef.ABSOLUTE,
                 }[w.get_name()]
                 if w.get_name() == 'rotate-ref-abs':
-                    self.builder.get_object('rotation-ref-x').set_editable(True)
-                    self.builder.get_object('rotation-ref-y').set_editable(True)
+                    for _id in 'rotation-ref-x', 'rotation-ref-y':
+                        self.builder.get_object(_id).set_editable(True)
 
     def on_new_file(self, item):
         self.log('NEW FILE')
@@ -415,8 +415,6 @@ class MainWindowHandler:
         self.window.queue_draw()
 
     def normalize(self):
-        window_size = (self.world_window.width, self.world_window.height)
-
         for obj in self.display_file:
             obj.normalize(self.window_angle, window=self.world_window)
 
