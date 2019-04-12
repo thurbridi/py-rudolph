@@ -1,7 +1,7 @@
 '''Contains displayable object definitions.'''
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 from transformations import offset_matrix, scale_matrix, rotation_matrix
 
@@ -87,9 +87,14 @@ class Rect:
 
 
 @dataclass
+class Window(Rect):
+    angle: float = 0.0
+
+
+@dataclass
 class Viewport:
     region: Rect
-    window: Rect
+    window: Window
 
     @property
     def min(self) -> float:
@@ -192,6 +197,9 @@ class GraphicObject(ABC):
     def normalize(self, angle: float, window: Rect):
         pass
 
+    def clipped(self, window: Window) -> Optional['GraphicObject']:
+        return self
+
 
 class Point(GraphicObject):
     def __init__(self, pos: Vec2, name=''):
@@ -238,6 +246,16 @@ class Point(GraphicObject):
         )
 
         self.normalized = self.pos @ norm_matrix
+
+    def clipped(self, window: Window) -> Optional[GraphicObject]:
+        return (
+            self if
+            self.x >= window.min.x and
+            self.x <= window.max.x and
+            self.y >= window.min.y and
+            self.y <= window.max.y
+            else None
+        )
 
 
 class Line(GraphicObject):

@@ -12,6 +12,7 @@ from graphics import (
     Rect,
     Vec2,
     Scene,
+    Window,
 )
 
 from cgcodecs import ObjCodec
@@ -115,7 +116,6 @@ class MainWindowHandler:
         self.object_store = builder.get_object('object_store')
         self.display_file = []
         self.world_window = None
-        self.window_angle = 0
         self.output_buffer = builder.get_object('outputbuffer')
         self.press_start = None
         self.old_size = None
@@ -135,9 +135,9 @@ class MainWindowHandler:
         if self.world_window is None:
             w, h = allocation.width, allocation.height
             self.old_size = allocation
-            self.world_window = Rect(
+            self.world_window = Window(
                 Vec2(-w / 2, -h / 2),
-                Vec2(w / 2, h / 2)
+                Vec2(w / 2, h / 2),
             )
 
         w_proportion = allocation.width / self.old_size.width
@@ -169,10 +169,12 @@ class MainWindowHandler:
 
     def on_draw(self, widget, cr):
         def window_to_viewport(v: Vec2):
+            window = self.world_window
+            vmin = viewport.region.min
             vw, vh = viewport.width, viewport.height
             return Vec2(
-                ((v.x - self.world_window.min.x) / window_w) * vw,
-                (1 - ((v.y - self.world_window.min.y) / window_h)) * vh
+                vmin.x + ((v.x - window.min.x) / window.width) * vw,
+                vmin.y + (1 - ((v.y - window.min.y) / window.height)) * vh
             )
 
         viewport = self.viewport()
@@ -181,11 +183,10 @@ class MainWindowHandler:
         cr.paint()
         cr.set_source_rgb(0.8, 0.0, 0.0)
 
-        window_w = self.world_window.width
-        window_h = self.world_window.height
-
         for obj in self.display_file:
-            obj.draw(cr, viewport, window_to_viewport)
+            clipped = obj.clipped(self.world_window)
+            if clipped:
+                clipped.draw(cr, viewport, window_to_viewport)
 
         viewport.draw(cr)
 
@@ -268,7 +269,7 @@ class MainWindowHandler:
             if op == 'translate':
                 args[0] = (
                     args[0] @
-                    rotation_matrix(self.window_angle)
+                    rotation_matrix(self.world_window.angle)
                 )
                 obj.translate(*args)
             elif op == 'scale':
@@ -288,7 +289,10 @@ class MainWindowHandler:
                 }[self.rotation_ref]
 
                 obj.rotate(*args, ref)
-            obj.normalize(angle=self.window_angle, window=self.world_window)
+            obj.normalize(
+                angle=self.world_window.angle,
+                window=self.world_window
+            )
 
         self.window.queue_draw()
 
@@ -299,9 +303,9 @@ class MainWindowHandler:
         return (self.display_file[int(str(index))] for index in rows)
 
     def add_object(self, obj: GraphicObject):
-        window = self.world_window or Rect(Vec2(-100, -100), Vec2(100, 100))
+        window = self.world_window or Rect(Vec2(-1, -1), Vec2(1, 1))
 
-        obj.normalize(self.window_angle, window=window)
+        obj.normalize(self.world_window.angle, window=window)
         self.display_file.append(obj)
         self.object_store.append([
             obj.name,
@@ -415,13 +419,13 @@ class MainWindowHandler:
             file_chooser.destroy()
 
     def on_clicked_rotate_window(self, widget: Gtk.Button):
-        self.window_angle += int(entry_text(self, 'window-rot-entry'))
+        self.world_window.angle += int(entry_text(self, 'window-rot-entry'))
         self.normalize()
         self.window.queue_draw()
 
     def normalize(self):
         for obj in self.display_file:
-            obj.normalize(self.window_angle, window=self.world_window)
+            obj.normalize(self.world_window.angle, window=self.world_window)
 
 
 class MainWindow(Gtk.ApplicationWindow):
