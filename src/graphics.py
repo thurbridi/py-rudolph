@@ -316,6 +316,72 @@ class Line(GraphicObject):
             self.end @ norm_matrix
         ]
 
+    def clipped(self, window: Window) -> Optional[GraphicObject]:
+        class Region:
+            INSIDE = 0b0000
+            LEFT = 0b0001
+            RIGHT = 0b0010
+            BOTTOM = 0b0100
+            TOP = 0b1000
+
+        def region_of(v: Vec2) -> Region:
+            region = Region.INSIDE
+            if v.x < window.min.x:
+                region |= Region.LEFT
+            elif v.x > window.max.x:
+                region |= Region.RIGHT
+
+            if v.y < window.min.y:
+                region |= Region.TOP
+            elif v.y > window.max.y:
+                region |= Region.BOTTOM
+
+            return region
+
+        new_line = Line(self.start, self.end)
+        regions = [region_of(v) for v in (new_line.start, new_line.end)]
+
+        wmin = window.min
+        wmax = window.max
+
+        for i in range(900000000):
+            print(f'iter {i}: {new_line.start, new_line.end}')
+            # Both inside
+            if all([r == Region.INSIDE for r in regions]):
+                print('all done!')
+                new_line.normalize(window.angle, window)
+                return new_line
+            # Both outside (and in the same side)
+            elif regions[0] & regions[1] != 0:
+                return
+
+            clip_index = 0 if regions[0] != Region.INSIDE else 1
+            print(f'clip_index: {clip_index}')
+
+            dx, dy, _ = new_line.end - new_line.start
+            m = dx / dy
+
+            if regions[clip_index] & Region.TOP != 0:
+                x = new_line.x1 + m * (wmax.y - new_line.y1)
+                y = wmax.y
+            elif regions[clip_index] & Region.BOTTOM != 0:
+                x = new_line.x1 + m * (wmin.y - new_line.y1)
+                y = wmin.y
+            elif regions[clip_index] & Region.RIGHT != 0:
+                x = wmax.x
+                y = new_line.y1 + (wmax.x - new_line.x1) / m
+            elif regions[clip_index] & Region.LEFT != 0:
+                x = wmin.x
+                y = new_line.y1 + (wmin.x - new_line.x1) / m
+
+            if clip_index == 0:
+                new_line.start = Vec2(x, y)
+                regions[0] = region_of(new_line.start)
+            else:
+                new_line.end = Vec2(x, y)
+                regions[1] = region_of(new_line.end)
+        return new_line
+
 
 class Polygon(GraphicObject):
     def __init__(self, vertices, name=''):

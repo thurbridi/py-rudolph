@@ -163,7 +163,7 @@ class MainWindowHandler:
                     widget.get_allocated_width(),
                     widget.get_allocated_height(),
                 ),
-            ).with_margin(10),
+            ).with_margin(40),
             window=self.world_window,
         )
 
