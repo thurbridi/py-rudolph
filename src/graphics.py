@@ -194,7 +194,7 @@ class GraphicObject(ABC):
         pass
 
     @abstractmethod
-    def normalize(self, angle: float, window: Rect):
+    def normalize(self, window: Window):
         pass
 
     def clipped(self, window: Window) -> Optional['GraphicObject']:
@@ -206,7 +206,7 @@ class Point(GraphicObject):
         super().__init__(name)
 
         self.pos = pos
-        self.normalize(0, Rect(min=Vec2(), max=Vec2()))
+        self.normalize(Window(min=Vec2(), max=Vec2()))
 
     @property
     def x(self) -> float:
@@ -236,12 +236,12 @@ class Point(GraphicObject):
     def centroid(self):
         return self.pos
 
-    def normalize(self, angle: float, window: Rect):
+    def normalize(self, window: Window):
         center = window.center()
 
         norm_matrix = (
             offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-angle) @
+            rotation_matrix(-window.angle) @
             offset_matrix(center.x, center.y)
         )
 
@@ -263,7 +263,7 @@ class Line(GraphicObject):
         super().__init__(name)
         self.start = start
         self.end = end
-        self.normalize(0, Rect(min=Vec2(), max=Vec2()))
+        self.normalize(Window(min=Vec2(), max=Vec2()))
 
     @property
     def x1(self):
@@ -302,12 +302,12 @@ class Line(GraphicObject):
     def centroid(self):
         return (self.start + self.end) / 2
 
-    def normalize(self, angle: float, window: Rect):
+    def normalize(self, window: Window):
         center = window.center()
 
         norm_matrix = (
             offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-angle) @
+            rotation_matrix(-window.angle) @
             offset_matrix(center.x, center.y)
         )
 
@@ -331,9 +331,9 @@ class Line(GraphicObject):
             elif v.x > window.max.x:
                 region |= Region.RIGHT
 
-            if v.y < window.min.y:
+            if v.y > window.max.y:
                 region |= Region.TOP
-            elif v.y > window.max.y:
+            elif v.y < window.min.y:
                 region |= Region.BOTTOM
 
             return region
@@ -344,19 +344,16 @@ class Line(GraphicObject):
         wmin = window.min
         wmax = window.max
 
-        for i in range(900000000):
-            print(f'iter {i}: {new_line.start, new_line.end}')
+        while True:
             # Both inside
             if all([r == Region.INSIDE for r in regions]):
-                print('all done!')
-                new_line.normalize(window.angle, window)
+                new_line.normalize(window)
                 return new_line
             # Both outside (and in the same side)
             elif regions[0] & regions[1] != 0:
                 return
 
             clip_index = 0 if regions[0] != Region.INSIDE else 1
-            print(f'clip_index: {clip_index}')
 
             dx, dy, _ = new_line.end - new_line.start
             m = dx / dy
@@ -380,7 +377,6 @@ class Line(GraphicObject):
             else:
                 new_line.end = Vec2(x, y)
                 regions[1] = region_of(new_line.end)
-        return new_line
 
 
 class Polygon(GraphicObject):
@@ -418,11 +414,11 @@ class Polygon(GraphicObject):
         for i, vertex in enumerate(self.vertices):
             self.vertices[i] = vertex @ matrix
 
-    def normalize(self, angle: float, window: Rect):
+    def normalize(self, window: Window):
         center = window.center()
         norm_matrix = (
             offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-angle) @
+            rotation_matrix(-window.angle) @
             offset_matrix(center.x, center.y)
         )
 

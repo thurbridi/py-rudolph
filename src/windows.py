@@ -289,10 +289,7 @@ class MainWindowHandler:
                 }[self.rotation_ref]
 
                 obj.rotate(*args, ref)
-            obj.normalize(
-                angle=self.world_window.angle,
-                window=self.world_window
-            )
+            obj.normalize(self.world_window)
 
         self.window.queue_draw()
 
@@ -305,7 +302,7 @@ class MainWindowHandler:
     def add_object(self, obj: GraphicObject):
         window = self.world_window or Rect(Vec2(-1, -1), Vec2(1, 1))
 
-        obj.normalize(self.world_window.angle, window=window)
+        obj.normalize(window)
         self.display_file.append(obj)
         self.object_store.append([
             obj.name,
@@ -425,7 +422,7 @@ class MainWindowHandler:
 
     def normalize(self):
         for obj in self.display_file:
-            obj.normalize(self.world_window.angle, window=self.world_window)
+            obj.normalize(self.world_window)
 
 
 class MainWindow(Gtk.ApplicationWindow):
