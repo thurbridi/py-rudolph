@@ -1,53 +1,16 @@
 '''Contains displayable object definitions.'''
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, List, Optional
-from transformations import offset_matrix, scale_matrix, rotation_matrix
+from typing import List, Optional
 
 import numpy as np
 from cairo import Context
 
+from linalg import identity, Vec2, TransformType
+from transformations import offset_matrix, scale_matrix, rotation_matrix
+
 
 np.set_printoptions(formatter={'float': lambda x: '{0:0.2f}, '.format(x)})
-
-
-class Vec2(np.ndarray):
-    def __new__(cls, x: float = 0, y: float = 0):
-        obj = np.asarray([x, y, 1], dtype=float).view(cls)
-        return obj
-
-    @property
-    def x(self) -> float:
-        return self[0]
-
-    @property
-    def y(self) -> float:
-        return self[1]
-
-
-class Vec3(np.ndarray):
-    def __new__(cls, x: float = 0, y: float = 0, z: float = 0):
-        obj = np.asarray([x, y, z, 1], dtype=float).view(cls)
-        return obj
-
-    @property
-    def x(self) -> float:
-        return self[0]
-
-    @property
-    def y(self) -> float:
-        return self[1]
-
-    @property
-    def z(self) -> float:
-        return self[2]
-
-
-TransformType = Callable[[Vec2], Vec2]
-
-
-def identity(v: Vec2) -> Vec2:
-    return v
 
 
 @dataclass
@@ -381,7 +344,9 @@ class Polygon(GraphicObject):
         window: Window,
         method: 'LineClippingMethod',
     ) -> Optional['Polygon']:
-        pass
+        from clipping import poly_clip
+
+        return poly_clip(self, window, method)
 
 
 @dataclass

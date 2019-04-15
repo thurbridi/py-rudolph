@@ -4,7 +4,7 @@ from typing import Optional
 
 import numpy
 
-from graphics import Line, Vec2, Window
+from graphics import Line, Polygon, Vec2, Window
 
 
 class LineClippingMethod(Enum):
@@ -347,7 +347,7 @@ def line_clip(
         line: Line,
         window: Window,
         method=LineClippingMethod.COHEN_SUTHERLAND
-) -> Line:
+) -> Optional[Line]:
     METHODS = {
         LineClippingMethod.COHEN_SUTHERLAND: cohen_sutherland_line_clip,
         LineClippingMethod.LIANG_BARSKY: liang_barsky_line_clip,
@@ -355,3 +355,40 @@ def line_clip(
         LineClippingMethod.NICHOLL: nicholl_line_clip,
     }
     return METHODS[method](line, window)
+
+
+def poly_iter(poly: Polygon):
+    vertices = poly.vertices
+
+    v1 = vertices[0]
+    for v2 in vertices[1:]:
+        yield v1, v2
+        v1 = v2
+    yield v1, vertices[0]
+
+
+def poly_clip(
+    poly: Polygon,
+    window: Window,
+    method: LineClippingMethod,
+) -> Optional[Polygon]:
+    lines = [
+        line_clip(Line(v1, v2), window, method)
+        for v1, v2 in poly_iter(poly)
+    ]
+
+    lines = [line for line in lines if line is not None]
+
+    if not lines:
+        return
+
+    v = []
+    for line in lines:
+        v.append(line.start)
+        v.append(line.end)
+    v.append(lines[-1].end)
+
+    p = Polygon(v)
+    p.normalize(window)
+
+    return p
