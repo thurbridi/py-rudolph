@@ -2,7 +2,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, List, Optional
-
 from transformations import offset_matrix, scale_matrix, rotation_matrix
 
 import numpy as np
@@ -197,7 +196,11 @@ class GraphicObject(ABC):
     def normalize(self, window: Window):
         pass
 
-    def clipped(self, window: Window) -> Optional['GraphicObject']:
+    def clipped(
+        self,
+        window: Window,
+        method=None,
+    ) -> Optional['GraphicObject']:
         return self
 
 
@@ -247,7 +250,7 @@ class Point(GraphicObject):
 
         self.normalized = self.pos @ norm_matrix
 
-    def clipped(self, window: Window) -> Optional[GraphicObject]:
+    def clipped(self, window: Window, *args, **kwargs) -> Optional['Point']:
         return (
             self if
             self.x >= window.min.x and
@@ -316,67 +319,13 @@ class Line(GraphicObject):
             self.end @ norm_matrix
         ]
 
-    def clipped(self, window: Window) -> Optional[GraphicObject]:
-        class Region:
-            INSIDE = 0b0000
-            LEFT = 0b0001
-            RIGHT = 0b0010
-            BOTTOM = 0b0100
-            TOP = 0b1000
-
-        def region_of(v: Vec2) -> Region:
-            region = Region.INSIDE
-            if v.x < window.min.x:
-                region |= Region.LEFT
-            elif v.x > window.max.x:
-                region |= Region.RIGHT
-
-            if v.y > window.max.y:
-                region |= Region.TOP
-            elif v.y < window.min.y:
-                region |= Region.BOTTOM
-
-            return region
-
-        new_line = Line(self.start, self.end)
-        regions = [region_of(v) for v in (new_line.start, new_line.end)]
-
-        wmin = window.min
-        wmax = window.max
-
-        while True:
-            # Both inside
-            if all([r == Region.INSIDE for r in regions]):
-                new_line.normalize(window)
-                return new_line
-            # Both outside (and in the same side)
-            elif regions[0] & regions[1] != 0:
-                return
-
-            clip_index = 0 if regions[0] != Region.INSIDE else 1
-
-            dx, dy, _ = new_line.end - new_line.start
-            m = dx / dy
-
-            if regions[clip_index] & Region.TOP != 0:
-                x = new_line.x1 + m * (wmax.y - new_line.y1)
-                y = wmax.y
-            elif regions[clip_index] & Region.BOTTOM != 0:
-                x = new_line.x1 + m * (wmin.y - new_line.y1)
-                y = wmin.y
-            elif regions[clip_index] & Region.RIGHT != 0:
-                x = wmax.x
-                y = new_line.y1 + (wmax.x - new_line.x1) / m
-            elif regions[clip_index] & Region.LEFT != 0:
-                x = wmin.x
-                y = new_line.y1 + (wmin.x - new_line.x1) / m
-
-            if clip_index == 0:
-                new_line.start = Vec2(x, y)
-                regions[0] = region_of(new_line.start)
-            else:
-                new_line.end = Vec2(x, y)
-                regions[1] = region_of(new_line.end)
+    def clipped(
+        self,
+        window: Window,
+        method: 'LineClippingMethod',
+    ) -> Optional[GraphicObject]:
+        from clipping import line_clip
+        return line_clip(self, window, method)
 
 
 class Polygon(GraphicObject):
@@ -426,6 +375,13 @@ class Polygon(GraphicObject):
             vertex @ norm_matrix
             for vertex in self.vertices
         ]
+
+    def clipped(
+        self,
+        window: Window,
+        method: 'LineClippingMethod',
+    ) -> Optional['Polygon']:
+        pass
 
 
 @dataclass

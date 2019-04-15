@@ -4,6 +4,7 @@ import gi
 from gi.repository import Gtk, Gdk
 
 import graphics
+from clipping import LineClippingMethod
 from graphics import (
     GraphicObject,
     Line,
@@ -183,8 +184,9 @@ class MainWindowHandler:
         cr.paint()
         cr.set_source_rgb(0.8, 0.0, 0.0)
 
+        clipping_method = LineClippingMethod.LIANG_BARSKY
         for obj in self.display_file:
-            clipped = obj.clipped(self.world_window)
+            clipped = obj.clipped(self.world_window, method=clipping_method)
             if clipped:
                 clipped.draw(cr, viewport, window_to_viewport)
 
