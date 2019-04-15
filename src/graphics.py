@@ -308,6 +308,9 @@ class Polygon(GraphicObject):
             viewport: Viewport,
             transform: TransformType = identity
     ):
+        if not self.normalized:
+            return
+
         start = self.normalized[0]
         start_vp = transform(Vec2(start[0], start[1]))
         cr.move_to(start_vp.x, start_vp.y)
