@@ -122,6 +122,7 @@ class MainWindowHandler:
         self.old_size = None
         self.rotation_ref = RotationRef.CENTER
         self.current_file = None
+        self.clipping_method = LineClippingMethod.COHEN_SUTHERLAND
 
     def log(self, msg: str):
         self.output_buffer.insert_at_cursor(f'{msg}\n')
@@ -184,9 +185,11 @@ class MainWindowHandler:
         cr.paint()
         cr.set_source_rgb(0.8, 0.0, 0.0)
 
-        clipping_method = LineClippingMethod.LIANG_BARSKY
         for obj in self.display_file:
-            clipped = obj.clipped(self.world_window, method=clipping_method)
+            clipped = obj.clipped(
+                self.world_window,
+                method=self.clipping_method
+            )
             if clipped:
                 clipped.draw(cr, viewport, window_to_viewport)
 
@@ -425,6 +428,14 @@ class MainWindowHandler:
     def normalize(self):
         for obj in self.display_file:
             obj.normalize(self.world_window)
+
+    def on_change_clipping_method(self, widget: Gtk.ComboBoxText):
+        METHODS = {
+            'Cohen Sutherland': LineClippingMethod.COHEN_SUTHERLAND,
+            'Liang Barsky': LineClippingMethod.LIANG_BARSKY,
+        }
+        self.clipping_method = METHODS[widget.get_active_text()]
+        self.window.queue_draw()
 
 
 class MainWindow(Gtk.ApplicationWindow):

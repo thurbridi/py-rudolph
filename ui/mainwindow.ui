@@ -2,6 +2,24 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <object class="GtkListStore" id="clipping-methods">
+    <columns>
+      <!-- column-name method-id -->
+      <column type="gint"/>
+      <!-- column-name method -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">asdf</col>
+      </row>
+      <row>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">123</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkImage" id="img_add">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -605,6 +623,49 @@
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkBox" id="window-clipping-box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="spacing">8</property>
+                                <child>
+                                  <object class="GtkLabel" id="label-clipping-method">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="label" translatable="yes">Clipping Method:</property>
+                                    <property name="width_chars">14</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkComboBoxText" id="window-clipping-method">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="active">0</property>
+                                    <property name="active_id">cohen</property>
+                                    <items>
+                                      <item id="cohen" translatable="yes">Cohen Sutherland</item>
+                                      <item id="barsky" translatable="yes">Liang Barsky</item>
+                                    </items>
+                                    <signal name="changed" handler="on_change_clipping_method" swapped="no"/>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
                                     <property name="fill">True</property>
                                     <property name="position">1</property>
                                   </packing>
