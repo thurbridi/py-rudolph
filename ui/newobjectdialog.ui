@@ -140,6 +140,8 @@
                           <object class="GtkAlignment" id="align4">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_right">8</property>
+                            <property name="margin_bottom">8</property>
                             <property name="left_padding">12</property>
                             <child>
                               <object class="GtkBox" id="f1_box2">
@@ -284,6 +286,8 @@
                           <object class="GtkAlignment" id="align2">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_right">8</property>
+                            <property name="margin_bottom">8</property>
                             <property name="left_padding">12</property>
                             <child>
                               <object class="GtkBox" id="f1_box3">
@@ -397,6 +401,8 @@
                           <object class="GtkAlignment" id="align3">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_right">8</property>
+                            <property name="margin_bottom">8</property>
                             <property name="left_padding">12</property>
                             <child>
                               <object class="GtkBox" id="f3_box1">
