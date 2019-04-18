@@ -339,7 +339,7 @@ class Polygon(GraphicObject):
             offset_matrix(center.x, center.y)
         )
 
-        p = Polygon([v @ m for v in self.vertices])
+        p = Polygon([v @ m for v in self.vertices], filled=self.filled)
 
         return poly_clip(p, window, method)
 
