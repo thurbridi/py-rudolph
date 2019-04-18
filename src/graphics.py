@@ -291,7 +291,9 @@ class Line(GraphicObject):
 
         line = Line(self.start @ m, self.end @ m)
 
-        return line_clip(line, window, method)
+        clipped = line_clip(line, window, method)
+        clipped.normalize(window)
+        return clipped
 
 
 class Polygon(GraphicObject):
