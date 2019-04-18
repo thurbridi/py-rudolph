@@ -145,11 +145,12 @@
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="delete_object">
-                        <property name="label" translatable="yes">Delete object</property>
+                        <property name="label" translatable="yes">Delete objects</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="image">img_delete</property>
                         <property name="use_stock">False</property>
+                        <signal name="activate" handler="remove_selected_objects" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -712,55 +713,67 @@
                 <property name="spacing">8</property>
                 <property name="baseline_position">top</property>
                 <child>
-                  <object class="GtkViewport" id="viewport">
+                  <object class="GtkPaned">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="hexpand">True</property>
-                    <property name="vexpand">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="orientation">vertical</property>
+                    <property name="position">400</property>
+                    <property name="position_set">True</property>
+                    <property name="wide_handle">True</property>
                     <child>
-                      <object class="GtkDrawingArea" id="drawing_area">
+                      <object class="GtkViewport" id="viewport">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="events">GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK | GDK_SCROLL_MASK</property>
-                        <signal name="button-press-event" handler="on_button_press" swapped="no"/>
-                        <signal name="button-release-event" handler="on_button_release" swapped="no"/>
-                        <signal name="draw" handler="on_draw" swapped="no"/>
-                        <signal name="motion-notify-event" handler="on_motion" swapped="no"/>
-                        <signal name="scroll-event" handler="on_scroll" swapped="no"/>
-                        <signal name="size-allocate" handler="on_resize" swapped="no"/>
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <child>
+                          <object class="GtkDrawingArea" id="drawing_area">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="events">GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK | GDK_SCROLL_MASK</property>
+                            <signal name="button-press-event" handler="on_button_press" swapped="no"/>
+                            <signal name="button-release-event" handler="on_button_release" swapped="no"/>
+                            <signal name="draw" handler="on_draw" swapped="no"/>
+                            <signal name="motion-notify-event" handler="on_motion" swapped="no"/>
+                            <signal name="scroll-event" handler="on_scroll" swapped="no"/>
+                            <signal name="size-allocate" handler="on_resize" swapped="no"/>
+                          </object>
+                        </child>
                       </object>
+                      <packing>
+                        <property name="resize">True</property>
+                        <property name="shrink">False</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkScrolledWindow" id="output_scrollwindow">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="vscrollbar_policy">always</property>
+                        <property name="window_placement">bottom-left</property>
+                        <property name="shadow_type">in</property>
+                        <child>
+                          <object class="GtkTextView" id="output">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="hscroll_policy">natural</property>
+                            <property name="vscroll_policy">natural</property>
+                            <property name="wrap_mode">word</property>
+                            <property name="left_margin">4</property>
+                            <property name="buffer">outputbuffer</property>
+                            <property name="monospace">True</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="resize">True</property>
+                        <property name="shrink">False</property>
+                      </packing>
                     </child>
                   </object>
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkScrolledWindow" id="output_scrollwindow">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="valign">start</property>
-                    <property name="vscrollbar_policy">always</property>
-                    <property name="window_placement">bottom-left</property>
-                    <property name="shadow_type">in</property>
-                    <child>
-                      <object class="GtkTextView" id="output">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="hscroll_policy">natural</property>
-                        <property name="vscroll_policy">natural</property>
-                        <property name="wrap_mode">word</property>
-                        <property name="left_margin">4</property>
-                        <property name="buffer">outputbuffer</property>
-                        <property name="monospace">True</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
@@ -774,7 +787,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">False</property>
-                    <property name="position">2</property>
+                    <property name="position">3</property>
                   </packing>
                 </child>
               </object>
