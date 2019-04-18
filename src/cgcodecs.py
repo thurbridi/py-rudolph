@@ -43,6 +43,8 @@ class ObjCodec:
                     indexes += f'{idx + i} '
                 indexes += f'{idx}'
 
+                if obj.filled:
+                    objects_txt += f'usemtl filled\n'
                 objects_txt += f'l {indexes}\n'
                 idx += n
 
@@ -56,6 +58,7 @@ class ObjCodec:
         window = None
 
         current_name = ''
+        filled = False
 
         for line in obj_file.splitlines():
             cmd, *args = line.split(' ')
@@ -64,6 +67,9 @@ class ObjCodec:
                 vertices.append(Vec2(float(args[0]), float(args[1])))
             elif cmd == 'o':
                 current_name = args[0]
+            elif cmd == 'usemtl':
+                if args[0] == 'filled':
+                    filled = True
             elif cmd == 'p':
                 objs.append(
                     Point(pos=vertices[int(args[0]) - 1], name=current_name)
@@ -81,9 +87,11 @@ class ObjCodec:
                     objs.append(
                         Polygon(
                             vertices=[vertices[int(i) - 1] for i in args[:-1]],
-                            name=current_name
+                            name=current_name,
+                            filled=filled
                         )
                     )
+                    filled = False
             elif cmd == 'w':
                 window = Rect(
                     min=vertices[int(args[0]) - 1],

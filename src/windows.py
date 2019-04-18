@@ -77,7 +77,13 @@ class NewObjectDialogHandler:
             )
         elif NB_PAGES[page_num] == 'polygon':
             if len(self.vertices) >= 3:
-                self.dialog.new_object = Polygon(self.vertices, name=name)
+                filled = self.builder.get_object('switch_filled').get_active()
+
+                self.dialog.new_object = Polygon(
+                    self.vertices,
+                    name=name,
+                    filled=filled
+                )
         else:
             raise ValueError('No page with given index.')
 
@@ -95,6 +101,16 @@ class NewObjectDialogHandler:
 
         vertice_store.append([x, y, 1])
         self.vertices.append(Vec2(x, y))
+
+    def on_switch_filled_active(self, widget, active: bool):
+        label_wireframe = self.builder.get_object('label_wireframe')
+        label_filled = self.builder.get_object('label_filled')
+        if widget.get_active():
+            label_wireframe.set_markup('<span weight="normal">Wireframe</span>')
+            label_filled.set_markup('<span weight="bold">Filled</span>')
+        else:
+            label_wireframe.set_markup('<span weight="bold">Wireframe</span>')
+            label_filled.set_markup('<span weight="normal">Filled</span>')
 
 
 class NewObjectDialog(Gtk.Dialog):

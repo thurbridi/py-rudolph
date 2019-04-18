@@ -292,9 +292,10 @@ class Line(GraphicObject):
 
 
 class Polygon(GraphicObject):
-    def __init__(self, vertices, name=''):
+    def __init__(self, vertices, name='', filled=False):
         self.name = name
         self.vertices = vertices
+        self.filled = filled
         self.normalized = self.vertices
 
     @property
@@ -311,19 +312,18 @@ class Polygon(GraphicObject):
         if not self.normalized:
             return
 
-        start = self.normalized[0]
-        start_vp = transform(Vec2(start[0], start[1]))
-        cr.move_to(start_vp.x, start_vp.y)
-
-        for i in range(1, len(self.vertices)):
+        for i in range(0, len(self.vertices)):
             next = self.normalized[i]
             next_vp = transform(Vec2(next[0], next[1]))
 
             cr.line_to(next_vp.x, next_vp.y)
-            cr.move_to(next_vp.x, next_vp.y)
+        cr.close_path()
 
-        cr.line_to(start_vp.x, start_vp.y)
-        cr.stroke()
+        if self.filled:
+            cr.stroke_preserve()
+            cr.fill()
+        else:
+            cr.stroke()
 
     def transform(self, matrix: np.ndarray):
         for i, vertex in enumerate(self.vertices):
