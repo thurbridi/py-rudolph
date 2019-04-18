@@ -188,9 +188,7 @@ class Point(GraphicObject):
             viewport: Viewport,
             transform: TransformType = identity,
     ):
-        coord_vp = self.normalized
-
-        coord_vp = transform(coord_vp)
+        coord_vp = transform(self.normalized)
         cr.move_to(coord_vp.x, coord_vp.y)
         cr.arc(coord_vp.x, coord_vp.y, 1, 0, 2 * np.pi)
         cr.fill()
@@ -203,23 +201,19 @@ class Point(GraphicObject):
         return self.pos
 
     def normalize(self, window: Window):
-        center = window.center()
-
-        norm_matrix = (
-            offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-window.angle) @
-            offset_matrix(center.x, center.y)
-        )
-
-        self.normalized = self.pos @ norm_matrix
+        self.normalized = self.pos
 
     def clipped(self, window: Window, *args, **kwargs) -> Optional['Point']:
+        wmin = window.min
+        wmax = window.max
+        pos = self.pos
+
         return (
             self if
-            self.x >= window.min.x and
-            self.x <= window.max.x and
-            self.y >= window.min.y and
-            self.y <= window.max.y
+            pos.x >= wmin.x and
+            pos.x <= wmax.x and
+            pos.y >= wmin.y and
+            pos.y <= wmax.y
             else None
         )
 
@@ -269,18 +263,7 @@ class Line(GraphicObject):
         return (self.start + self.end) / 2
 
     def normalize(self, window: Window):
-        center = window.center()
-
-        norm_matrix = (
-            offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-window.angle) @
-            offset_matrix(center.x, center.y)
-        )
-
-        self.normalized = [
-            self.start @ norm_matrix,
-            self.end @ norm_matrix
-        ]
+        self.normalized = [self.start, self.end]
 
     def clipped(
         self,
@@ -288,7 +271,17 @@ class Line(GraphicObject):
         method: 'LineClippingMethod',
     ) -> Optional[GraphicObject]:
         from clipping import line_clip
-        return line_clip(self, window, method)
+        center = window.center()
+
+        m = (
+            offset_matrix(-center.x, -center.y) @
+            rotation_matrix(-window.angle) @
+            offset_matrix(center.x, center.y)
+        )
+
+        line = Line(self.start @ m, self.end @ m)
+
+        return line_clip(line, window, method)
 
 
 class Polygon(GraphicObject):
@@ -330,17 +323,7 @@ class Polygon(GraphicObject):
             self.vertices[i] = vertex @ matrix
 
     def normalize(self, window: Window):
-        center = window.center()
-        norm_matrix = (
-            offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-window.angle) @
-            offset_matrix(center.x, center.y)
-        )
-
-        self.normalized = [
-            vertex @ norm_matrix
-            for vertex in self.vertices
-        ]
+        self.normalized = self.vertices
 
     def clipped(
         self,
@@ -348,8 +331,17 @@ class Polygon(GraphicObject):
         method: 'LineClippingMethod',
     ) -> Optional['Polygon']:
         from clipping import poly_clip
+        center = window.center()
 
-        return poly_clip(self, window, method)
+        m = (
+            offset_matrix(-center.x, -center.y) @
+            rotation_matrix(-window.angle) @
+            offset_matrix(center.x, center.y)
+        )
+
+        p = Polygon([v @ m for v in self.vertices])
+
+        return poly_clip(p, window, method)
 
 
 @dataclass

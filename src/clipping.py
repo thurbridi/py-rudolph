@@ -53,7 +53,6 @@ def cohen_sutherland_line_clip(
     while True:
         # Both inside
         if all([r == CohenRegion.INSIDE for r in regions]):
-            new_line.normalize(window)
             return new_line
         # Both outside (and in the same side)
         elif regions[0] & regions[1] != 0:
@@ -385,20 +384,16 @@ def poly_clip(
 
     def check_case(r: List[CohenRegion], _dir: CohenRegion):
         r = [_r & _dir for _r in r]
-        if (r[0] != CohenRegion.INSIDE
-                and r[1] != CohenRegion.INSIDE):
+        if (r[0] != CohenRegion.INSIDE and r[1] != CohenRegion.INSIDE):
             return Case.OUT_OUT
 
-        if (r[0] != CohenRegion.INSIDE
-                and r[1] == CohenRegion.INSIDE):
+        if (r[0] != CohenRegion.INSIDE and r[1] == CohenRegion.INSIDE):
             return Case.OUT_IN
 
-        if (r[0] == CohenRegion.INSIDE
-                and r[1] != CohenRegion.INSIDE):
+        if (r[0] == CohenRegion.INSIDE and r[1] != CohenRegion.INSIDE):
             return Case.IN_OUT
 
-        if (r[0] == CohenRegion.INSIDE
-                and r[1] == CohenRegion.INSIDE):
+        if (r[0] == CohenRegion.INSIDE and r[1] == CohenRegion.INSIDE):
             return Case.IN_IN
 
     # Each of window's side
@@ -465,6 +460,5 @@ def poly_clip(
         v = _v
 
     p = Polygon(v, filled=poly.filled)
-    p.normalize(window)
 
     return p
