@@ -2,6 +2,7 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <object class="GtkEntryBuffer" id="entrybuffer1"/>
   <object class="GtkListStore" id="vertice_store">
     <columns>
       <!-- column-name m_col_x -->
@@ -501,8 +502,13 @@
                   <object class="GtkBox" id="boxLines3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_left">8</property>
+                    <property name="margin_right">8</property>
+                    <property name="margin_top">8</property>
+                    <property name="margin_bottom">8</property>
                     <property name="vexpand">True</property>
                     <property name="orientation">vertical</property>
+                    <property name="spacing">8</property>
                     <child>
                       <object class="GtkFrame" id="frame1">
                         <property name="visible">True</property>
@@ -540,6 +546,7 @@
                                     <property name="can_focus">True</property>
                                     <property name="width_chars">5</property>
                                     <property name="max_width_chars">5</property>
+                                    <property name="text" translatable="yes">0</property>
                                     <property name="placeholder_text" translatable="yes">0</property>
                                     <property name="input_purpose">number</property>
                                   </object>
@@ -567,6 +574,7 @@
                                     <property name="can_focus">True</property>
                                     <property name="width_chars">5</property>
                                     <property name="max_width_chars">5</property>
+                                    <property name="text" translatable="yes">0</property>
                                     <property name="placeholder_text" translatable="yes">0</property>
                                     <property name="input_purpose">number</property>
                                   </object>
@@ -592,6 +600,7 @@
                                     <property name="can_focus">True</property>
                                     <property name="width_chars">5</property>
                                     <property name="max_width_chars">5</property>
+                                    <property name="text" translatable="yes">0</property>
                                     <property name="placeholder_text" translatable="yes">0</property>
                                     <property name="input_purpose">number</property>
                                   </object>
