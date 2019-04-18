@@ -127,11 +127,12 @@
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="delete_object">
-                        <property name="label" translatable="yes">Delete object</property>
+                        <property name="label" translatable="yes">Delete objects</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="image">img_delete</property>
                         <property name="use_stock">False</property>
+                        <signal name="activate" handler="remove_selected_objects" swapped="no"/>
                       </object>
                     </child>
                   </object>

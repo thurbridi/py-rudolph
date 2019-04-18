@@ -308,6 +308,16 @@ class MainWindowHandler:
             str(f'<{type(obj).__name__}>')
         ])
 
+    def remove_selected_objects(self, widget):
+        tree = self.builder.get_object('tree-displayfiles')
+        store, paths = tree.get_selection().get_selected_rows()
+
+        for path in reversed(paths):
+            iter = store.get_iter(path)
+            store.remove(iter)
+            self.display_file.pop(int(str(path)))
+        self.window.queue_draw()
+
     def on_toggle_fixed_window(self, checkbox: Gtk.ToggleButton):
         editable = checkbox.get_active()
         for widget_id in ['window-width', 'window-height']:
