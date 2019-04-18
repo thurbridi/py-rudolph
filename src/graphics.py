@@ -188,9 +188,7 @@ class Point(GraphicObject):
             viewport: Viewport,
             transform: TransformType = identity,
     ):
-        coord_vp = self.normalized
-
-        coord_vp = transform(coord_vp)
+        coord_vp = transform(self.normalized)
         cr.move_to(coord_vp.x, coord_vp.y)
         cr.arc(coord_vp.x, coord_vp.y, 1, 0, 2 * np.pi)
         cr.fill()
@@ -206,17 +204,9 @@ class Point(GraphicObject):
         self.normalized = self.pos
 
     def clipped(self, window: Window, *args, **kwargs) -> Optional['Point']:
-        center = window.center()
-
-        m = (
-            offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-window.angle) @
-            offset_matrix(center.x, center.y)
-        )
-
         wmin = window.min
         wmax = window.max
-        pos = self.normalized @ m
+        pos = self.pos
 
         return (
             self if
@@ -291,9 +281,7 @@ class Line(GraphicObject):
 
         line = Line(self.start @ m, self.end @ m)
 
-        clipped = line_clip(line, window, method)
-        clipped.normalize(window)
-        return clipped
+        return line_clip(line, window, method)
 
 
 class Polygon(GraphicObject):

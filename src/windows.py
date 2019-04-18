@@ -191,6 +191,7 @@ class MainWindowHandler:
                 method=self.clipping_method
             )
             if clipped:
+                clipped.normalize(self.world_window)
                 clipped.draw(cr, viewport, window_to_viewport)
 
         viewport.draw(cr)
