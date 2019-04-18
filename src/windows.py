@@ -17,7 +17,7 @@ from graphics import (
 )
 
 from cgcodecs import ObjCodec
-from transformations import rotation_matrix
+from transformations import rotation_matrix, offset_matrix
 
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
@@ -191,6 +191,7 @@ class MainWindowHandler:
                 method=self.clipping_method
             )
             if clipped:
+                clipped.normalize(self.world_window)
                 clipped.draw(cr, viewport, window_to_viewport)
 
         viewport.draw(cr)
@@ -239,6 +240,14 @@ class MainWindowHandler:
         if self.dragging:
             current = Vec2(-event.x, event.y)
             delta = viewport_to_window(current - self.press_start)
+
+            window = self.world_window
+            center = window.center()
+
+            m = rotation_matrix(window.angle)
+
+            delta = delta @ m
+
             self.press_start = current
             self.world_window.min += delta
             self.world_window.max += delta
