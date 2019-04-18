@@ -459,6 +459,6 @@ def poly_clip(
         ]
         v = _v
 
-    p = Polygon(v)
+    p = Polygon(v, filled=poly.filled)
 
     return p
