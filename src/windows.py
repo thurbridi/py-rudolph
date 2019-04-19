@@ -4,6 +4,7 @@ import gi
 from gi.repository import Gtk, Gdk
 
 import graphics
+from clipping import LineClippingMethod
 from graphics import (
     GraphicObject,
     Line,
@@ -12,10 +13,11 @@ from graphics import (
     Rect,
     Vec2,
     Scene,
+    Window,
 )
 
 from cgcodecs import ObjCodec
-from transformations import rotation_matrix
+from transformations import rotation_matrix, offset_matrix
 
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
@@ -75,7 +77,13 @@ class NewObjectDialogHandler:
             )
         elif NB_PAGES[page_num] == 'polygon':
             if len(self.vertices) >= 3:
-                self.dialog.new_object = Polygon(self.vertices, name=name)
+                filled = self.builder.get_object('switch_filled').get_active()
+
+                self.dialog.new_object = Polygon(
+                    self.vertices,
+                    name=name,
+                    filled=filled
+                )
         else:
             raise ValueError('No page with given index.')
 
@@ -93,6 +101,16 @@ class NewObjectDialogHandler:
 
         vertice_store.append([x, y, 1])
         self.vertices.append(Vec2(x, y))
+
+    def on_switch_filled_active(self, widget, active: bool):
+        label_wireframe = self.builder.get_object('label_wireframe')
+        label_filled = self.builder.get_object('label_filled')
+        if widget.get_active():
+            label_wireframe.set_markup('<span weight="normal">Wireframe</span>')
+            label_filled.set_markup('<span weight="bold">Filled</span>')
+        else:
+            label_wireframe.set_markup('<span weight="bold">Wireframe</span>')
+            label_filled.set_markup('<span weight="normal">Filled</span>')
 
 
 class NewObjectDialog(Gtk.Dialog):
@@ -115,12 +133,12 @@ class MainWindowHandler:
         self.object_store = builder.get_object('object_store')
         self.display_file = []
         self.world_window = None
-        self.window_angle = 0
         self.output_buffer = builder.get_object('outputbuffer')
         self.press_start = None
         self.old_size = None
         self.rotation_ref = RotationRef.CENTER
         self.current_file = None
+        self.clipping_method = LineClippingMethod.COHEN_SUTHERLAND
 
     def log(self, msg: str):
         self.output_buffer.insert_at_cursor(f'{msg}\n')
@@ -135,9 +153,9 @@ class MainWindowHandler:
         if self.world_window is None:
             w, h = allocation.width, allocation.height
             self.old_size = allocation
-            self.world_window = Rect(
+            self.world_window = Window(
                 Vec2(-w / 2, -h / 2),
-                Vec2(w / 2, h / 2)
+                Vec2(w / 2, h / 2),
             )
 
         w_proportion = allocation.width / self.old_size.width
@@ -163,16 +181,18 @@ class MainWindowHandler:
                     widget.get_allocated_width(),
                     widget.get_allocated_height(),
                 ),
-            ).with_margin(10),
+            ).with_margin(40),
             window=self.world_window,
         )
 
     def on_draw(self, widget, cr):
         def window_to_viewport(v: Vec2):
+            window = self.world_window
+            vmin = viewport.region.min
             vw, vh = viewport.width, viewport.height
             return Vec2(
-                ((v.x - self.world_window.min.x) / window_w) * vw,
-                (1 - ((v.y - self.world_window.min.y) / window_h)) * vh
+                vmin.x + ((v.x - window.min.x) / window.width) * vw,
+                vmin.y + (1 - ((v.y - window.min.y) / window.height)) * vh
             )
 
         viewport = self.viewport()
@@ -181,11 +201,14 @@ class MainWindowHandler:
         cr.paint()
         cr.set_source_rgb(0.8, 0.0, 0.0)
 
-        window_w = self.world_window.width
-        window_h = self.world_window.height
-
         for obj in self.display_file:
-            obj.draw(cr, viewport, window_to_viewport)
+            clipped = obj.clipped(
+                self.world_window,
+                method=self.clipping_method
+            )
+            if clipped:
+                clipped.normalize(self.world_window)
+                clipped.draw(cr, viewport, window_to_viewport)
 
         viewport.draw(cr)
 
@@ -208,7 +231,7 @@ class MainWindowHandler:
         about_dialog = Gtk.AboutDialog(
             None,
             authors=['Arthur Bridi Guazzelli', 'João Paulo T. I. Z.'],
-            version='1.3.1',
+            version='1.4.0',
             program_name='Rudolph'
         )
         about_dialog.run()
@@ -233,6 +256,14 @@ class MainWindowHandler:
         if self.dragging:
             current = Vec2(-event.x, event.y)
             delta = viewport_to_window(current - self.press_start)
+
+            window = self.world_window
+            center = window.center()
+
+            m = rotation_matrix(window.angle)
+
+            delta = delta @ m
+
             self.press_start = current
             self.world_window.min += delta
             self.world_window.max += delta
@@ -268,7 +299,7 @@ class MainWindowHandler:
             if op == 'translate':
                 args[0] = (
                     args[0] @
-                    rotation_matrix(self.window_angle)
+                    rotation_matrix(self.world_window.angle)
                 )
                 obj.translate(*args)
             elif op == 'scale':
@@ -288,7 +319,7 @@ class MainWindowHandler:
                 }[self.rotation_ref]
 
                 obj.rotate(*args, ref)
-            obj.normalize(angle=self.window_angle, window=self.world_window)
+            obj.normalize(self.world_window)
 
         self.window.queue_draw()
 
@@ -299,14 +330,24 @@ class MainWindowHandler:
         return (self.display_file[int(str(index))] for index in rows)
 
     def add_object(self, obj: GraphicObject):
-        window = self.world_window or Rect(Vec2(-100, -100), Vec2(100, 100))
+        window = self.world_window or Rect(Vec2(-1, -1), Vec2(1, 1))
 
-        obj.normalize(self.window_angle, window=window)
+        obj.normalize(window)
         self.display_file.append(obj)
         self.object_store.append([
             obj.name,
             str(f'<{type(obj).__name__}>')
         ])
+
+    def remove_selected_objects(self, widget):
+        tree = self.builder.get_object('tree-displayfiles')
+        store, paths = tree.get_selection().get_selected_rows()
+
+        for path in reversed(paths):
+            iter = store.get_iter(path)
+            store.remove(iter)
+            self.display_file.pop(int(str(path)))
+        self.window.queue_draw()
 
     def on_toggle_fixed_window(self, checkbox: Gtk.ToggleButton):
         editable = checkbox.get_active()
@@ -415,13 +456,21 @@ class MainWindowHandler:
             file_chooser.destroy()
 
     def on_clicked_rotate_window(self, widget: Gtk.Button):
-        self.window_angle += int(entry_text(self, 'window-rot-entry'))
+        self.world_window.angle += int(entry_text(self, 'window-rot-entry'))
         self.normalize()
         self.window.queue_draw()
 
     def normalize(self):
         for obj in self.display_file:
-            obj.normalize(self.window_angle, window=self.world_window)
+            obj.normalize(self.world_window)
+
+    def on_change_clipping_method(self, widget: Gtk.ComboBoxText):
+        METHODS = {
+            'Cohen Sutherland': LineClippingMethod.COHEN_SUTHERLAND,
+            'Liang Barsky': LineClippingMethod.LIANG_BARSKY,
+        }
+        self.clipping_method = METHODS[widget.get_active_text()]
+        self.window.queue_draw()
 
 
 class MainWindow(Gtk.ApplicationWindow):
