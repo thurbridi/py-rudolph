@@ -377,20 +377,7 @@ class MainWindowHandler:
         self.builder.get_object('drawing_area').queue_draw()
 
     def on_open_file(self, item):
-        file_chooser = Gtk.FileChooserDialog(
-            title='Open File',
-            parent=self.window,
-            action=Gtk.FileChooserAction.OPEN,
-            buttons=(
-                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                Gtk.STOCK_OPEN, Gtk.ResponseType.OK
-            )
-        )
-
-        filter = Gtk.FileFilter()
-        filter.set_name('CG OBJ')
-        filter.add_pattern('*.obj')
-        file_chooser.add_filter(filter)
+        file_chooser = self.new_file_chooser(Gtk.FileChooserAction.OPEN)
 
         response = file_chooser.run()
         if response == Gtk.ResponseType.OK:
@@ -422,22 +409,7 @@ class MainWindowHandler:
             file.close()
 
         elif label == 'gtk-save-as' or self.current_file is None:
-            file_chooser = Gtk.FileChooserDialog(
-                title='Save File',
-                parent=self.window,
-                action=Gtk.FileChooserAction.SAVE,
-                buttons=(
-                    Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                    Gtk.STOCK_SAVE_AS, Gtk.ResponseType.OK
-                )
-            )
-
-            filter = Gtk.FileFilter()
-            filter.set_name('CG OBJ')
-            filter.add_pattern('*.obj')
-            file_chooser.add_filter(filter)
-
-            file_chooser.set_current_name('untitled.obj')
+            file_chooser = self.new_file_chooser(Gtk.FileChooserAction.SAVE)
 
             response = file_chooser.run()
             if response == Gtk.ResponseType.OK:
@@ -454,6 +426,30 @@ class MainWindowHandler:
                 file.close()
                 self.current_file = path
             file_chooser.destroy()
+
+    def new_file_chooser(self, action):
+        file_chooser = Gtk.FileChooserDialog(
+            parent=self.window,
+            action=action,
+            buttons=(
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK
+            )
+        )
+
+        if action == Gtk.FileChooserAction.OPEN:
+            file_chooser.title = 'Open file'
+
+        elif action == Gtk.FileChooserAction.SAVE:
+            file_chooser.title = 'Save file'
+            file_chooser.set_current_name('untitled.obj')
+
+        filter = Gtk.FileFilter()
+        filter.set_name('CG OBJ')
+        filter.add_pattern('*.obj')
+        file_chooser.add_filter(filter)
+
+        return file_chooser
 
     def on_clicked_rotate_window(self, widget: Gtk.Button):
         self.world_window.angle += int(entry_text(self, 'window-rot-entry'))
