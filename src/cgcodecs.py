@@ -1,4 +1,4 @@
-from graphics import Scene, Vec2, Point, Line, Polygon, Rect
+from graphics import Vec2, Point, Line, Polygon, Rect
 
 
 class ObjCodec:
@@ -7,7 +7,7 @@ class ObjCodec:
         return f'{v.x} {v.y} 1.0'
 
     @classmethod
-    def encode(cls, scene: Scene) -> str:
+    def encode(cls, scene: 'Scene') -> str:
         # Writes a subset of the Wavefront OBJ file format in ASCII
         vertices_txt = ''
         objects_txt = ''
@@ -51,7 +51,8 @@ class ObjCodec:
         return vertices_txt + objects_txt
 
     @classmethod
-    def decode(cls, obj_file: str) -> Scene:
+    def decode(cls, obj_file: str) -> 'Scene':
+        from scene import Scene
         # Returns a Scene with the window and objects found
         vertices = []
         objs = []
