@@ -399,21 +399,21 @@ def poly_clip(
     # Each of window's side
     WINDOWS = {
         CohenRegion.LEFT: Window(
-                              min=Vec2(window.min.x, -numpy.inf),
-                              max=Vec2(window.min.x, numpy.inf),
-                          ),
+            min=Vec2(window.min.x, -numpy.inf),
+            max=Vec2(window.min.x, numpy.inf),
+        ),
         CohenRegion.RIGHT: Window(
-                              min=Vec2(window.max.x, -numpy.inf),
-                              max=Vec2(window.max.x, numpy.inf),
-                          ),
+            min=Vec2(window.max.x, -numpy.inf),
+            max=Vec2(window.max.x, numpy.inf),
+        ),
         CohenRegion.BOTTOM: Window(
-                              min=Vec2(-numpy.inf, window.min.y),
-                              max=Vec2(numpy.inf, window.min.y),
-                          ),
+            min=Vec2(-numpy.inf, window.min.y),
+            max=Vec2(numpy.inf, window.min.y),
+        ),
         CohenRegion.TOP: Window(
-                              min=Vec2(-numpy.inf, window.max.y),
-                              max=Vec2(numpy.inf, window.max.y),
-                          ),
+            min=Vec2(-numpy.inf, window.max.y),
+            max=Vec2(numpy.inf, window.max.y),
+        ),
 
     }
 
