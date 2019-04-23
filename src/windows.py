@@ -17,7 +17,7 @@ from graphics import (
 )
 
 from cgcodecs import ObjCodec
-from transformations import rotation_matrix, offset_matrix
+from transformations import rotation_matrix
 
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
@@ -106,7 +106,9 @@ class NewObjectDialogHandler:
         label_wireframe = self.builder.get_object('label_wireframe')
         label_filled = self.builder.get_object('label_filled')
         if widget.get_active():
-            label_wireframe.set_markup('<span weight="normal">Wireframe</span>')
+            label_wireframe.set_markup(
+                '<span weight="normal">Wireframe</span>'
+            )
             label_filled.set_markup('<span weight="bold">Filled</span>')
         else:
             label_wireframe.set_markup('<span weight="bold">Wireframe</span>')
@@ -258,7 +260,6 @@ class MainWindowHandler:
             delta = viewport_to_window(current - self.press_start)
 
             window = self.world_window
-            center = window.center()
 
             m = rotation_matrix(window.angle)
 
