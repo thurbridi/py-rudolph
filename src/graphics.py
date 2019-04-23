@@ -1,7 +1,7 @@
 '''Contains displayable object definitions.'''
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional, List
 
 import numpy as np
 from cairo import Context
@@ -13,10 +13,239 @@ from transformations import offset_matrix, scale_matrix, rotation_matrix
 np.set_printoptions(formatter={'float': lambda x: '{0:0.2f}, '.format(x)})
 
 
-@dataclass
-class Rect:
-    min: Vec2
-    max: Vec2
+class GraphicObject(ABC):
+    def __init__(self, vertices=[], name=''):
+        super().__init__()
+        self.name = name
+        self.vertices: List[Vec2] = vertices
+
+    @abstractmethod
+    def draw(
+            self,
+            cr: Context,
+            viewport: 'Viewport',
+            transform: TransformType,
+    ):
+        pass
+
+    @abstractmethod
+    def normalize(self, window: 'Window'):
+        pass
+
+    def transform(self, matrix: np.ndarray):
+        for vertex in self.vertices:
+            vertex = vertex @ matrix
+
+    def centroid(self):
+        return sum(self.vertices) / len(self.vertices)
+
+    def translate(self, offset: Vec2):
+        self.transform(offset_matrix(offset.x, offset.y))
+
+    def scale(self, factor: Vec2):
+        cx = self.centroid().x
+        cy = self.centroid().y
+        t_matrix = (
+            offset_matrix(-cx, -cy) @
+            scale_matrix(factor.x, factor.y) @
+            offset_matrix(cx, cy)
+        )
+        self.transform(t_matrix)
+
+    def rotate(self, angle: float, reference: Vec2):
+        refx = reference.x
+        refy = reference.y
+        t_matrix = (
+            offset_matrix(-refx, -refy) @
+            rotation_matrix(angle) @
+            offset_matrix(refx, refy)
+        )
+        self.transform(t_matrix)
+
+    def clipped(
+        self,
+        window: 'Window',
+        method=None,
+    ) -> Optional['GraphicObject']:
+        return self
+
+
+class Point(GraphicObject):
+    def __init__(self, pos: Vec2, name=''):
+        super().__init__(vertices=[pos], name=name)
+        self.normalize(Window(min=Vec2(), max=Vec2()))
+
+    @property
+    def x(self) -> float:
+        return self.vertices[0].x
+
+    @property
+    def y(self) -> float:
+        return self.vertices[0].y
+
+    def draw(
+            self,
+            cr: Context,
+            viewport: 'Viewport',
+            transform: TransformType = identity,
+    ):
+        coord_vp = transform(self.normalized)
+        cr.move_to(coord_vp.x, coord_vp.y)
+        cr.arc(coord_vp.x, coord_vp.y, 1, 0, 2 * np.pi)
+        cr.fill()
+
+    def normalize(self, window: 'Window'):
+        self.normalized = self.pos
+
+    def clipped(self, window: 'Window', *args, **kwargs) -> Optional['Point']:
+        wmin = window.min
+        wmax = window.max
+        pos = self.pos
+
+        return (
+            self if (pos.x >= wmin.x
+                     and pos.x <= wmax.x
+                     and pos.y >= wmin.y
+                     and pos.y <= wmax.y)
+            else None
+        )
+
+
+class Line(GraphicObject):
+    def __init__(self, start: Vec2, end: Vec2, name=''):
+        super().__init__(name)
+        self.start = start
+        self.end = end
+        self.normalize(Window(min=Vec2(), max=Vec2()))
+
+    @property
+    def x1(self):
+        return self.start[0]
+
+    @property
+    def y1(self):
+        return self.start[1]
+
+    @property
+    def x2(self):
+        return self.end[0]
+
+    @property
+    def y2(self):
+        return self.end[1]
+
+    def draw(
+            self,
+            cr: Context,
+            viewport: 'Viewport',
+            transform: TransformType = identity
+    ):
+        coord_vp1 = transform(self.normalized[0])
+        coord_vp2 = transform(self.normalized[1])
+
+        cr.move_to(coord_vp1.x, coord_vp1.y)
+        cr.line_to(coord_vp2.x, coord_vp2.y)
+        cr.stroke()
+
+    def transform(self, matrix: np.ndarray):
+        self.start = self.start @ matrix
+        self.end = self.end @ matrix
+
+    @property
+    def centroid(self):
+        return (self.start + self.end) / 2
+
+    def normalize(self, window: 'Window'):
+        self.normalized = [self.start, self.end]
+
+    def clipped(
+        self,
+        window: 'Window',
+        method: 'LineClippingMethod',
+    ) -> Optional[GraphicObject]:
+        from clipping import line_clip
+        center = window.center()
+
+        m = (
+            offset_matrix(-center.x, -center.y) @
+            rotation_matrix(-window.angle) @
+            offset_matrix(center.x, center.y)
+        )
+
+        line = Line(self.start @ m, self.end @ m)
+
+        return line_clip(line, window, method)
+
+
+class Polygon(GraphicObject):
+    def __init__(self, vertices, name='', filled=False):
+        super().__init__(vertices=vertices, name=name)
+        self.filled = filled
+        self.normalized = self.vertices
+
+    def draw(
+            self,
+            cr: Context,
+            viewport: 'Viewport',
+            transform: TransformType = identity
+    ):
+        if not self.normalized:
+            return
+
+        for i in range(0, len(self.vertices)):
+            next = self.normalized[i]
+            next_vp = transform(Vec2(next[0], next[1]))
+
+            cr.line_to(next_vp.x, next_vp.y)
+        cr.close_path()
+
+        if self.filled:
+            cr.stroke_preserve()
+            cr.fill()
+        else:
+            cr.stroke()
+
+    def normalize(self, window: 'Window'):
+        self.normalized = self.vertices
+
+    def clipped(
+        self,
+        window: 'Window',
+        method: 'LineClippingMethod',
+    ) -> Optional['Polygon']:
+        from clipping import poly_clip
+        center = window.center()
+
+        m = (
+            offset_matrix(-center.x, -center.y) @
+            rotation_matrix(-window.angle) @
+            offset_matrix(center.x, center.y)
+        )
+
+        p = Polygon([v @ m for v in self.vertices], filled=self.filled)
+
+        return poly_clip(p, window, method)
+
+
+class Rect(GraphicObject):
+    def __init__(self, min: Vec2, max: Vec2, name=''):
+        super().__init__(vertices=[min, max], name=name)
+
+    @property
+    def min(self):
+        return self.vertices[0]
+
+    @property
+    def max(self):
+        return self.vertices[1]
+
+    @min.setter
+    def min(self, value: Vec2):
+        self.vertices[0] = value
+
+    @max.setter
+    def max(self, value: Vec2):
+        self.vertices[1] = value
 
     @property
     def width(self) -> float:
@@ -25,6 +254,17 @@ class Rect:
     @property
     def height(self) -> float:
         return self.max.y - self.min.y
+
+    def draw(
+            self,
+            cr: Context,
+            viewport: 'Viewport',
+            transform: TransformType,
+    ):
+        pass
+
+    def normalize(self, window: 'Window'):
+        pass
 
     def offset(self, offset: Vec2):
         self.min += offset
@@ -48,9 +288,10 @@ class Rect:
         )
 
 
-@dataclass
 class Window(Rect):
-    angle: float = 0.0
+    def __init__(self, min: Vec2, max: Vec2, angle: float = 0.0):
+        super().__init__(min, max)
+        self.angle = angle
 
 
 @dataclass
@@ -108,243 +349,3 @@ class Viewport:
             cr.line_to(x, y)
             cr.move_to(x, y)
         cr.stroke()
-
-
-class GraphicObject(ABC):
-    def __init__(self, name=''):
-        super().__init__()
-        self.name = name
-
-    @abstractmethod
-    def draw(
-            self,
-            cr: Context,
-            viewport: Viewport,
-            transform: TransformType,
-    ):
-        pass
-
-    @abstractmethod
-    def transform(self, matrix: np.ndarray):
-        pass
-
-    def translate(self, offset: Vec2):
-        self.transform(offset_matrix(offset.x, offset.y))
-
-    def scale(self, factor: Vec2):
-        cx = self.centroid.x
-        cy = self.centroid.y
-        t_matrix = (
-            offset_matrix(-cx, -cy) @
-            scale_matrix(factor.x, factor.y) @
-            offset_matrix(cx, cy)
-        )
-        self.transform(t_matrix)
-
-    def rotate(self, angle: float, reference: Vec2):
-        refx = reference.x
-        refy = reference.y
-        t_matrix = (
-            offset_matrix(-refx, -refy) @
-            rotation_matrix(angle) @
-            offset_matrix(refx, refy)
-        )
-        self.transform(t_matrix)
-
-    @abstractmethod
-    def centroid():
-        pass
-
-    @abstractmethod
-    def normalize(self, window: Window):
-        pass
-
-    def clipped(
-        self,
-        window: Window,
-        method=None,
-    ) -> Optional['GraphicObject']:
-        return self
-
-
-class Point(GraphicObject):
-    def __init__(self, pos: Vec2, name=''):
-        super().__init__(name)
-
-        self.pos = pos
-        self.normalize(Window(min=Vec2(), max=Vec2()))
-
-    @property
-    def x(self) -> float:
-        return self.pos[0]
-
-    @property
-    def y(self) -> float:
-        return self.pos[1]
-
-    def draw(
-            self,
-            cr: Context,
-            viewport: Viewport,
-            transform: TransformType = identity,
-    ):
-        coord_vp = transform(self.normalized)
-        cr.move_to(coord_vp.x, coord_vp.y)
-        cr.arc(coord_vp.x, coord_vp.y, 1, 0, 2 * np.pi)
-        cr.fill()
-
-    def transform(self, matrix: np.ndarray):
-        self.pos = self.pos @ matrix
-
-    @property
-    def centroid(self):
-        return self.pos
-
-    def normalize(self, window: Window):
-        self.normalized = self.pos
-
-    def clipped(self, window: Window, *args, **kwargs) -> Optional['Point']:
-        wmin = window.min
-        wmax = window.max
-        pos = self.pos
-
-        return (
-            self if
-            pos.x >= wmin.x and
-            pos.x <= wmax.x and
-            pos.y >= wmin.y and
-            pos.y <= wmax.y
-            else None
-        )
-
-
-class Line(GraphicObject):
-    def __init__(self, start: Vec2, end: Vec2, name=''):
-        super().__init__(name)
-        self.start = start
-        self.end = end
-        self.normalize(Window(min=Vec2(), max=Vec2()))
-
-    @property
-    def x1(self):
-        return self.start[0]
-
-    @property
-    def y1(self):
-        return self.start[1]
-
-    @property
-    def x2(self):
-        return self.end[0]
-
-    @property
-    def y2(self):
-        return self.end[1]
-
-    def draw(
-            self,
-            cr: Context,
-            viewport: Viewport,
-            transform: TransformType = identity
-    ):
-        coord_vp1 = transform(self.normalized[0])
-        coord_vp2 = transform(self.normalized[1])
-
-        cr.move_to(coord_vp1.x, coord_vp1.y)
-        cr.line_to(coord_vp2.x, coord_vp2.y)
-        cr.stroke()
-
-    def transform(self, matrix: np.ndarray):
-        self.start = self.start @ matrix
-        self.end = self.end @ matrix
-
-    @property
-    def centroid(self):
-        return (self.start + self.end) / 2
-
-    def normalize(self, window: Window):
-        self.normalized = [self.start, self.end]
-
-    def clipped(
-        self,
-        window: Window,
-        method: 'LineClippingMethod',
-    ) -> Optional[GraphicObject]:
-        from clipping import line_clip
-        center = window.center()
-
-        m = (
-            offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-window.angle) @
-            offset_matrix(center.x, center.y)
-        )
-
-        line = Line(self.start @ m, self.end @ m)
-
-        return line_clip(line, window, method)
-
-
-class Polygon(GraphicObject):
-    def __init__(self, vertices, name='', filled=False):
-        self.name = name
-        self.vertices = vertices
-        self.filled = filled
-        self.normalized = self.vertices
-
-    @property
-    def centroid(self):
-        center = np.sum(self.vertices, 0) / len(self.vertices)
-        return Vec2(center[0], center[1])
-
-    def draw(
-            self,
-            cr: Context,
-            viewport: Viewport,
-            transform: TransformType = identity
-    ):
-        if not self.normalized:
-            return
-
-        for i in range(0, len(self.vertices)):
-            next = self.normalized[i]
-            next_vp = transform(Vec2(next[0], next[1]))
-
-            cr.line_to(next_vp.x, next_vp.y)
-        cr.close_path()
-
-        if self.filled:
-            cr.stroke_preserve()
-            cr.fill()
-        else:
-            cr.stroke()
-
-    def transform(self, matrix: np.ndarray):
-        for i, vertex in enumerate(self.vertices):
-            self.vertices[i] = vertex @ matrix
-
-    def normalize(self, window: Window):
-        self.normalized = self.vertices
-
-    def clipped(
-        self,
-        window: Window,
-        method: 'LineClippingMethod',
-    ) -> Optional['Polygon']:
-        from clipping import poly_clip
-        center = window.center()
-
-        m = (
-            offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-window.angle) @
-            offset_matrix(center.x, center.y)
-        )
-
-        p = Polygon([v @ m for v in self.vertices], filled=self.filled)
-
-        return poly_clip(p, window, method)
-
-
-@dataclass
-class Scene:
-    objs: List[GraphicObject]
-    window: Rect = None
