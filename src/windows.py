@@ -235,6 +235,7 @@ class MainWindowHandler:
             program_name='Rudolph'
         )
         about_dialog.run()
+        about_dialog.close()
 
     def on_button_press(self, widget, event):
         if BUTTON_EVENTS[event.button] == 'left':
