@@ -64,17 +64,17 @@ def cohen_sutherland_line_clip(
         m = dx / dy
 
         if regions[clip_index] & CohenRegion.TOP != 0:
-            x = new_line.x1 + m * (wmax.y - new_line.y1)
+            x = new_line.start.x + m * (wmax.y - new_line.start.y)
             y = wmax.y
         elif regions[clip_index] & CohenRegion.BOTTOM != 0:
-            x = new_line.x1 + m * (wmin.y - new_line.y1)
+            x = new_line.start.x + m * (wmin.y - new_line.start.y)
             y = wmin.y
         elif regions[clip_index] & CohenRegion.RIGHT != 0:
             x = wmax.x
-            y = new_line.y1 + (wmax.x - new_line.x1) / m
+            y = new_line.start.y + (wmax.x - new_line.start.x) / m
         elif regions[clip_index] & CohenRegion.LEFT != 0:
             x = wmin.x
-            y = new_line.y1 + (wmin.x - new_line.x1) / m
+            y = new_line.start.y + (wmin.x - new_line.start.x) / m
 
         if clip_index == 0:
             new_line.start = Vec2(x, y)
@@ -273,19 +273,19 @@ def nicholl_line_clip(
     if region == 0:
         # Bottom-right
         if insider[1] & Region.BOTTOM:
-            insider[0].x = new_line.x1 + m * (wmin.y - new_line.y1)
+            insider[0].x = new_line.start.x + m * (wmin.y - new_line.start.y)
             insider[0].y = wmin.y
         elif insider[1] & Region.RIGHT != 0:
             insider[0].x = wmax.x
-            insider[0].y = new_line.y1 + (wmax.x - new_line.x1) / m
+            insider[0].y = new_line.start.y + (wmax.x - new_line.start.x) / m
         elif insider[1] & Region.LEFT != 0:
             insider[0].x = wmin.x
-            insider[0].y = new_line.y1 + (wmin.x - new_line.x1) / m
+            insider[0].y = new_line.start.y + (wmin.x - new_line.start.x) / m
 
     return Line(outsider[0], insider[0])
 
     # if insider[1] & Region.TOP != 0:
-    #     x = new_line.x1 + m * (wmax.y - new_line.y1)
+    #     x = new_line.start.x + m * (wmax.y - new_line.start.y)
     #     y = wmax.y
 
 

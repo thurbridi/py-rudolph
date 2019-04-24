@@ -1,4 +1,4 @@
-from graphics import Vec2, Point, Line, Polygon, Rect
+from graphics import Vec2, Point, Line, Polygon, Window
 
 
 class ObjCodec:
@@ -94,7 +94,7 @@ class ObjCodec:
                     )
                     filled = False
             elif cmd == 'w':
-                window = Rect(
+                window = Window(
                     min=vertices[int(args[0]) - 1],
                     max=vertices[int(args[1]) - 1]
                 )
