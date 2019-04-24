@@ -288,6 +288,9 @@ class MainWindowHandler:
 
         for obj in self.selected_objs():
             if op == 'translate':
+                args[0] = (
+                    args[0] @ rotation_matrix(self.scene.window.angle)
+                )
                 obj.translate(*args)
             elif op == 'scale':
                 obj.scale(*args)
@@ -372,21 +375,19 @@ class MainWindowHandler:
     def on_save_file(self, item):
         label = item.get_label()
         if label == 'gtk-save' and self.current_file is not None:
-            self.scene.save_scene(self.current_file)
+            self.scene.save(self.current_file)
+            self.log(f'SAVE FILE: {self.current_file}')
 
         elif label == 'gtk-save-as' or self.current_file is None:
             file_chooser = self.new_file_chooser(Gtk.FileChooserAction.SAVE)
 
             response = file_chooser.run()
             if response == Gtk.ResponseType.OK:
-                if label == 'gtk-save':
-                    self.log('SAVE FILE:')
-                elif label == 'gtk-save-as':
-                    self.log('SAVE AS FILE:')
                 path = file_chooser.get_filename()
                 self.log(path)
                 self.scene.save(path)
                 self.current_file = path
+                self.log(f'SAVE AS FILE: {path}')
             file_chooser.destroy()
 
     def new_file_chooser(self, action):
