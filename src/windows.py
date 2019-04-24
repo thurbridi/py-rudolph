@@ -34,6 +34,15 @@ BUTTON_EVENTS = {
 }
 
 
+def viewport_to_window(self, v: Vec2):
+    viewport = self.viewport()
+
+    return Vec2(
+        (v.x / viewport.width) * self.scene.window.width,
+        (v.y / viewport.height) * self.scene.window.height
+    )
+
+
 def entry_text(handler, entry_id: str) -> str:
     return handler.builder.get_object(entry_id).get_text()
 
@@ -236,19 +245,11 @@ class MainWindowHandler:
             self.dragging = True
 
     def on_motion(self, widget, event):
-        def viewport_to_window(v: Vec2):
-            viewport = self.viewport()
-
-            return Vec2(
-                (v.x / viewport.width) * self.scene.window.width,
-                (v.y / viewport.height) * self.scene.window.height
-            )
-
         # register x, y
         # translate window
         if self.dragging:
             current = Vec2(-event.x, event.y)
-            delta = viewport_to_window(current - self.press_start)
+            delta = viewport_to_window(self, current - self.press_start)
 
             window = self.scene.window
 
@@ -265,9 +266,12 @@ class MainWindowHandler:
             self.dragging = False
 
     def on_scroll(self, widget, event):
+        v = viewport_to_window(self, Vec2(event.x, event.y)) - self.viewport().region.centroid
         if event.direction == Gdk.ScrollDirection.UP:
+            self.scene.translate_window(Vec2(0.1, -0.1) * v)
             self.scene.zoom_window(0.5)
         elif event.direction == Gdk.ScrollDirection.DOWN:
+            self.scene.translate_window(Vec2(0.1, -0.1) * v)
             self.scene.zoom_window(2.0)
 
         widget.queue_draw()

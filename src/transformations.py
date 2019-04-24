@@ -37,8 +37,8 @@ def rotation_matrix(angle: float) -> np.ndarray:
     ).reshape(3, 3)
 
 
-# Normalized Device Coordinates Transformation
 def ndc_matrix(window: 'Window') -> np.ndarray:
+    '''Normalized Device Coordinates Transformation.'''
     return (
         offset_matrix(-window.centroid.x, -window.centroid.y)
         @ rotation_matrix(-window.angle)
@@ -50,4 +50,10 @@ def viewport_matrix(viewport: 'Rect') -> np.ndarray:
     return (
         scale_matrix(viewport.width / 2, -viewport.height / 2)
         @ offset_matrix(viewport.centroid.x, viewport.centroid.y)
+    )
+
+
+def viewport_to_window_matrix(viewport: 'Rect') -> np.ndarray:
+    return (
+        np.linalg.inv(viewport_matrix(viewport))
     )
