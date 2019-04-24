@@ -67,7 +67,7 @@ class ObjCodec:
             if cmd == 'v':
                 vertices.append(Vec2(float(args[0]), float(args[1])))
             elif cmd == 'o':
-                current_name = args[0]
+                current_name = ' '.join(args)
             elif cmd == 'usemtl':
                 if args[0] == 'filled':
                     filled = True
