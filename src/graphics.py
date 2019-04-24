@@ -6,7 +6,7 @@ from typing import Optional, List
 import numpy as np
 from cairo import Context
 
-from linalg import identity, Vec2, TransformType
+from linalg import Vec2, TransformType
 from transformations import (
     offset_matrix,
     scale_matrix,
