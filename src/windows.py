@@ -157,6 +157,7 @@ class MainWindowHandler:
         self.rotation_ref = RotationRef.CENTER
         self.current_file = None
         self.clipping_method = LineClippingMethod.COHEN_SUTHERLAND
+        self.pressed_keys = set()
 
     def log(self, msg: str):
         self.output_buffer.insert_at_cursor(f'{msg}\n')
@@ -244,6 +245,36 @@ class MainWindowHandler:
         )
         about_dialog.run()
         about_dialog.close()
+
+    def on_key_press(self, widget, event):
+        '''
+        Returns: False if event can propagate, True otherwise.
+        '''
+        DIRECTIONS = {
+            Gdk.KEY_Up: Vec2(0, -10),
+            Gdk.KEY_Down: Vec2(0, 10),
+            Gdk.KEY_Left: Vec2(10, 0),
+            Gdk.KEY_Right: Vec2(-10, 0),
+        }
+
+        self.pressed_keys |= {event.keyval}
+
+        for key in self.pressed_keys:
+            if key in DIRECTIONS:
+                self.world_window.offset(DIRECTIONS[key])
+
+        self.window.queue_draw()
+
+        return True
+
+    def on_key_release(self, widget, event):
+        '''
+        Returns: False if event can propagate, True otherwise.
+        '''
+
+        self.pressed_keys -= {event.keyval}
+
+        return False
 
     def on_button_press(self, widget, event):
         if BUTTON_EVENTS[event.button] == 'left':
