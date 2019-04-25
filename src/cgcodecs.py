@@ -1,4 +1,7 @@
-from graphics import Vec2, Point, Line, Polygon, Window
+from typing import List
+
+from graphics import GraphicObject, Vec2, Point, Line, Polygon, Window
+from scene import Scene
 
 
 class ObjCodec:
@@ -7,55 +10,52 @@ class ObjCodec:
         return f'{v.x} {v.y} 1.0'
 
     @classmethod
-    def encode(cls, scene: 'Scene') -> str:
-        # Writes a subset of the Wavefront OBJ file format in ASCII
+    def encode(cls, scene: Scene) -> str:
+        '''Writes a subset of the Wavefront OBJ file format in ASCII.'''
         vertices_txt = ''
         objects_txt = ''
-        idx = 1
+        index = 1
+
         if scene.window is not None:
             vertices_txt += f'v {cls.encode_vec2(scene.window.min)}\n'
             vertices_txt += f'v {cls.encode_vec2(scene.window.max)}\n'
 
             objects_txt += f'o window\n'
-            objects_txt += f'w {idx} {idx + 1}\n'
-            idx += 2
+            objects_txt += f'w {index} {index + 1}\n'
+            index += 2
 
         for obj in scene.objs:
-            obj_type = type(obj)
             objects_txt += f'o {obj.name}\n'
 
-            if obj_type == Point:
+            if isinstance(obj, Point):
                 vertices_txt += f'v {cls.encode_vec2(obj.pos)}\n'
 
-                objects_txt += f'p {idx}\n'
-                idx += 1
-            elif obj_type == Line:
+                objects_txt += f'p {index}\n'
+            elif isinstance(obj, Line):
                 vertices_txt += f'v {cls.encode_vec2(obj.start)}\n'
                 vertices_txt += f'v {cls.encode_vec2(obj.end)}\n'
 
-                objects_txt += f'l {idx} {idx + 1}\n'
-                idx += 2
-            elif obj_type == Polygon:
-                n = len(obj.vertices)
+                objects_txt += f'l {index} {index + 1}\n'
+            elif isinstance(obj, Polygon):
                 indexes = ''
-                for i in range(0, n):
+
+                for i, v in enumerate(obj.vertices):
                     vertices_txt += f'v {cls.encode_vec2(obj.vertices[i])}\n'
-                    indexes += f'{idx + i} '
-                indexes += f'{idx}'
+                    indexes += f'{index + i} '
+                indexes += f'{index}'
 
                 if obj.filled:
                     objects_txt += f'usemtl filled\n'
                 objects_txt += f'l {indexes}\n'
-                idx += n
+            index += len(obj.vertices)
 
         return vertices_txt + objects_txt
 
     @classmethod
-    def decode(cls, obj_file: str) -> 'Scene':
-        from scene import Scene
-        # Returns a Scene with the window and objects found
+    def decode(cls, obj_file: str) -> Scene:
+        '''Returns a Scene with the window and objects found.'''
         vertices = []
-        objs = []
+        objs: List[GraphicObject] = []
         window = None
 
         current_name = ''
