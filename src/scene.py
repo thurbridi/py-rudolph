@@ -14,7 +14,7 @@ class Scene:
     def add_object(self, obj: GraphicObject):
         self.objs.append(obj)
 
-    def remove_objects(self, indexes: Iterable[int]):
+    def remove_objects(self, indexes: Reversible[int]):
         for i in reversed(indexes):
             self.objs.pop(i)
 
@@ -27,16 +27,6 @@ class Scene:
     def rotate_window(self):
         pass
 
-    @classmethod
-    def load(self, path: str):
-        with open(path) as file:
-            contents = file.read()
-            return ObjCodec.decode(contents)
-
-    def save(self, path: str):
-        with open(path, 'w+') as file:
-            contents = ObjCodec.encode(self)
-            file.write(contents)
-
     def clip_objects(self):
         pass
+

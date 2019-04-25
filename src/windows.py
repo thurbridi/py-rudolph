@@ -3,7 +3,7 @@ from enum import auto, Enum
 import gi
 from gi.repository import Gtk, Gdk
 
-import graphics
+from cgcodecs import ObjCodec
 from clipping import LineClippingMethod
 from graphics import (
     GraphicObject,
@@ -13,6 +13,7 @@ from graphics import (
     Rect,
     Vec2,
     Window,
+    Viewport,
 )
 from scene import Scene
 from transformations import offset_matrix, rotation_matrix, viewport_matrix
@@ -171,9 +172,9 @@ class MainWindowHandler:
 
         self.old_size = allocation
 
-    def viewport(self) -> graphics.Viewport:
+    def viewport(self) -> Viewport:
         widget = self.builder.get_object('drawing_area')
-        return graphics.Viewport(
+        return Viewport(
             region=Rect(
                 min=Vec2(0, 0),
                 max=Vec2(
@@ -361,8 +362,10 @@ class MainWindowHandler:
         response = file_chooser.run()
         if response == Gtk.ResponseType.OK:
             path = file_chooser.get_filename()
-            self.log(f'OPEN FILE: {path}')
-            self.scene = Scene.load(path)
+            self.log(f'OPENING FILE: {path}')
+
+            with open(path) as file:
+                self.scene = ObjCodec.decode(file.read())
 
             self.object_store.clear()
             for obj in self.scene.objs:
@@ -375,9 +378,9 @@ class MainWindowHandler:
     def on_save_file(self, item):
         label = item.get_label()
         if label == 'gtk-save' and self.current_file is not None:
-            self.scene.save(self.current_file)
+            with open(path, 'w+') as file:
+                file.write(ObjCodec.encode(self.scene))
             self.log(f'SAVE FILE: {self.current_file}')
-
         elif label == 'gtk-save-as' or self.current_file is None:
             file_chooser = self.new_file_chooser(Gtk.FileChooserAction.SAVE)
 
@@ -388,6 +391,7 @@ class MainWindowHandler:
                 self.scene.save(path)
                 self.current_file = path
                 self.log(f'SAVE AS FILE: {path}')
+
             file_chooser.destroy()
 
     def new_file_chooser(self, action):
