@@ -99,4 +99,4 @@ class ObjCodec:
                     max=vertices[int(args[1]) - 1]
                 )
 
-        return Scene(objs=objs, window=window)
+        return Scene(objs=objs, window=None)
