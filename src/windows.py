@@ -3,7 +3,6 @@ from enum import auto, Enum
 import gi
 from gi.repository import Gtk, Gdk
 
-import graphics
 from clipping import LineClippingMethod
 from graphics import (
     GraphicObject,
@@ -15,7 +14,7 @@ from graphics import (
     Window,
 )
 from scene import Scene
-from transformations import offset_matrix, rotation_matrix, viewport_matrix
+from transformations import rotation_matrix, viewport_matrix
 
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
@@ -171,22 +170,19 @@ class MainWindowHandler:
 
         self.old_size = allocation
 
-    def viewport(self) -> graphics.Viewport:
+    def viewport(self) -> Rect:
         widget = self.builder.get_object('drawing_area')
-        return graphics.Viewport(
-            region=Rect(
-                min=Vec2(0, 0),
-                max=Vec2(
-                    widget.get_allocated_width(),
-                    widget.get_allocated_height(),
-                ),
-            ).with_margin(10),
-            window=self.scene.window,
-        )
+        return Rect(
+            min=Vec2(0, 0),
+            max=Vec2(
+                widget.get_allocated_width(),
+                widget.get_allocated_height(),
+            )
+        ).with_margin(10)
 
     def on_draw(self, widget, cr):
         viewport = self.viewport()
-        vp_matrix = viewport_matrix(viewport.region)
+        vp_matrix = viewport_matrix(viewport)
 
         cr.set_line_width(2.0)
         cr.paint()
@@ -202,7 +198,8 @@ class MainWindowHandler:
                 clipped.update_ndc(self.scene.window)
                 clipped.draw(cr, vp_matrix)
 
-        viewport.draw(cr)
+        cr.set_source_rgb(0.4, 0.4, 0.4)
+        viewport.draw(cr, vp_matrix)
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
@@ -285,12 +282,13 @@ class MainWindowHandler:
         }
 
         op, *args = TRANSFORMATIONS[widget.get_name()]
+        if op == 'translate':
+            args[0] = (
+                args[0] @ rotation_matrix(self.scene.window.angle)
+            )
 
         for obj in self.selected_objs():
             if op == 'translate':
-                args[0] = (
-                    args[0] @ rotation_matrix(self.scene.window.angle)
-                )
                 obj.translate(*args)
             elif op == 'scale':
                 obj.scale(*args)

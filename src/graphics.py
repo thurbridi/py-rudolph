@@ -1,12 +1,11 @@
 '''Contains displayable object definitions.'''
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Optional, List
 
 import numpy as np
 from cairo import Context
 
-from linalg import Vec2, TransformType
+from linalg import Vec2
 from transformations import (
     offset_matrix,
     scale_matrix,
@@ -229,12 +228,23 @@ class Rect(GraphicObject):
         return self.max.y - self.min.y
 
     def draw(
-            self,
-            cr: Context,
-            viewport: 'Viewport',
-            transform: TransformType,
+        self,
+        cr: Context,
+        vp_matrix: np.ndarray
     ):
-        pass
+        _min = self.min
+        _max = self.max
+
+        cr.move_to(_min.x, _min.y)
+        for x, y in [
+                (_max.x, _min.y),
+                (_max.x, _max.y),
+                (_min.x, _max.y),
+                (_min.x, _min.y),
+        ]:
+            cr.line_to(x, y)
+            cr.move_to(x, y)
+        cr.stroke()
 
     def with_margin(self, margin: float) -> 'Rect':
         return Rect(
@@ -247,60 +257,3 @@ class Window(Rect):
     def __init__(self, min: Vec2, max: Vec2, angle: float = 0.0):
         super().__init__(min, max)
         self.angle = angle
-
-
-@dataclass
-class Viewport:
-    region: Rect
-    window: Window
-
-    @property
-    def min(self) -> float:
-        return self.region.min
-
-    @property
-    def max(self) -> float:
-        return self.region.max
-
-    @property
-    def width(self) -> float:
-        return self.region.width
-
-    @property
-    def height(self) -> float:
-        return self.region.height
-
-    def transform(self, p: Vec2) -> Vec2:
-        if not isinstance(p, Vec2):
-            p = Vec2(p[0], p[1])
-
-        view_size = Vec2(
-            self.max.x - self.min.x,
-            self.max.y - self.min.y
-        )
-
-        win_size = Vec2(
-            self.window.max.x - self.window.min.x,
-            self.window.max.y - self.window.min.y
-        )
-
-        return Vec2(
-            (p.x - self.min.x) * view_size.x / win_size.x,
-            (p.y - self.min.y) * view_size.y / win_size.y,
-        )
-
-    def draw(self, cr: Context):
-        _min = self.min
-        _max = self.max
-
-        cr.set_source_rgb(0.4, 0.4, 0.4)
-        cr.move_to(_min.x, _min.y)
-        for x, y in [
-                (_max.x, _min.y),
-                (_max.x, _max.y),
-                (_min.x, _max.y),
-                (_min.x, _min.y),
-        ]:
-            cr.line_to(x, y)
-            cr.move_to(x, y)
-        cr.stroke()
