@@ -14,6 +14,9 @@ from graphics import (
     Vec2,
     Window,
     Viewport,
+    translate,
+    rotate,
+    scale,
 )
 from scene import Scene
 from transformations import offset_matrix, rotation_matrix, viewport_matrix
@@ -292,9 +295,9 @@ class MainWindowHandler:
                 args[0] = (
                     args[0] @ rotation_matrix(self.scene.window.angle)
                 )
-                obj.translate(*args)
+                translate(obj, *args)
             elif op == 'scale':
-                obj.scale(*args)
+                scale(obj, *args)
             elif op == 'rotate':
                 try:
                     abs_x = int(entry_text(self, 'rotation-ref-x'))
@@ -309,7 +312,7 @@ class MainWindowHandler:
                     RotationRef.ABSOLUTE: Vec2(float(abs_x), float(abs_y)),
                 }[self.rotation_ref]
 
-                obj.rotate(*args, ref)
+                rotate(obj, *args, ref)
             obj.update_ndc(self.scene.window)
 
         self.window.queue_draw()

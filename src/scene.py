@@ -1,9 +1,9 @@
 import numpy as np
-from typing import List, Iterable
+from typing import List, Reversible, Iterable
 
-from linalg import Vec2
+from geometry import Vec2
 from graphics import GraphicObject, Window
-from cgcodecs import ObjCodec
+from transformations import translated, rotated, scaled
 
 
 class Scene:
@@ -19,10 +19,16 @@ class Scene:
             self.objs.pop(i)
 
     def translate_window(self, offset: Vec2):
-        self.window.translate(offset)
+        if self.window is not None:
+            self.window.min, self.window.max = (
+                translated([self.window.min, self.window.max], offset)
+            )
 
     def zoom_window(self, factor: float):
-        self.window.scale(Vec2(factor, factor))
+        if self.window is not None:
+            self.window.min, self.window.max = (
+                scaled([self.window.min, self.window.max], Vec2(factor, factor))
+            )
 
     def rotate_window(self):
         pass

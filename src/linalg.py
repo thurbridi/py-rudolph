@@ -49,3 +49,4 @@ TransformType = Callable[[Vec2], Vec2]
 
 def identity(v: Vec2) -> Vec2:
     return v
+
