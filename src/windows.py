@@ -360,7 +360,10 @@ class MainWindowHandler:
         if response == Gtk.ResponseType.OK:
             path = file_chooser.get_filename()
             self.log(f'OPEN FILE: {path}')
+
+            old_window = self.scene.window
             self.scene = Scene.load(path)
+            self.scene.window = old_window
 
             self.object_store.clear()
             for obj in self.scene.objs:
