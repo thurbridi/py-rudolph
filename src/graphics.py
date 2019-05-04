@@ -67,7 +67,6 @@ class GraphicObject(ABC):
 
     def clipped(
         self,
-        window: 'Window',
         method=None,
     ) -> Optional['GraphicObject']:
         return self
@@ -95,16 +94,14 @@ class Point(GraphicObject):
         cr.arc(pos_vp.x, pos_vp.y, 1, 0, 2 * np.pi)
         cr.fill()
 
-    def clipped(self, window: 'Window', *args, **kwargs) -> Optional['Point']:
-        wmin = window.min
-        wmax = window.max
-        pos = self.pos
+    def clipped(self, *args, **kwargs) -> Optional['Point']:
+        pos = self.vertices_ndc[0]
 
         return (
-            self if (pos.x >= wmin.x
-                     and pos.x <= wmax.x
-                     and pos.y >= wmin.y
-                     and pos.y <= wmax.y)
+            self if (pos.x >= -1
+                     and pos.x <= 1
+                     and pos.y >= -1
+                     and pos.y <= 1)
             else None
         )
 
@@ -142,21 +139,11 @@ class Line(GraphicObject):
 
     def clipped(
         self,
-        window: 'Window',
         method: 'LineClippingMethod',
     ) -> Optional[GraphicObject]:
         from clipping import line_clip
-        center = window.centroid
 
-        m = (
-            offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-window.angle) @
-            offset_matrix(center.x, center.y)
-        )
-
-        line = Line(self.start @ m, self.end @ m)
-
-        return line_clip(line, window, method)
+        return line_clip(self, method)
 
 
 class Polygon(GraphicObject):
@@ -182,7 +169,6 @@ class Polygon(GraphicObject):
 
     def clipped(
         self,
-        window: 'Window',
         method: 'LineClippingMethod',
     ) -> Optional['Polygon']:
         from clipping import poly_clip

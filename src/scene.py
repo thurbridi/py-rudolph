@@ -12,6 +12,7 @@ class Scene:
         self.window = window
 
     def add_object(self, obj: GraphicObject):
+        obj.update_ndc(self.window)
         self.objs.append(obj)
 
     def remove_objects(self, indexes: Iterable[int]):
@@ -20,12 +21,20 @@ class Scene:
 
     def translate_window(self, offset: Vec2):
         self.window.translate(offset)
+        self.update_ndc()
 
     def zoom_window(self, factor: float):
         self.window.scale(Vec2(factor, factor))
+        self.update_ndc()
 
     def rotate_window(self):
         pass
+        self.update_ndc()
+
+    def update_ndc(self):
+        for obj in self.objs:
+            obj.update_ndc(self.window)
+
 
     @classmethod
     def load(self, path: str):

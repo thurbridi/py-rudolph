@@ -190,12 +190,9 @@ class MainWindowHandler:
 
         for obj in self.scene.objs:
             clipped = obj.clipped(
-                self.scene.window,
                 method=self.clipping_method
             )
-            clipped = obj
             if clipped:
-                clipped.update_ndc(self.scene.window)
                 clipped.draw(cr, vp_matrix)
 
         cr.set_source_rgb(0.4, 0.4, 0.4)
@@ -416,9 +413,11 @@ class MainWindowHandler:
         return file_chooser
 
     def on_clicked_rotate_window(self, widget: Gtk.Button):
-        self.scene.window.angle += int(entry_text(self, 'window-rot-entry'))
+        rotation_angle = int(entry_text(self, 'window-rot-entry'))
+        self.scene.window.angle += rotation_angle
         for obj in self.scene.objs:
             obj.update_ndc(self.scene.window)
+        self.log(f'Window rotated {rotation_angle} degrees')
         self.window.queue_draw()
 
     def on_change_clipping_method(self, widget: Gtk.ComboBoxText):
