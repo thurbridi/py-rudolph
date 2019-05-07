@@ -3,7 +3,6 @@ from enum import auto, Enum
 import gi
 from gi.repository import Gtk, Gdk
 
-import graphics
 from clipping import LineClippingMethod
 from graphics import (
     GraphicObject,
@@ -12,12 +11,10 @@ from graphics import (
     Polygon,
     Rect,
     Vec2,
-    Scene,
     Window,
 )
-
-from cgcodecs import ObjCodec
-from transformations import rotation_matrix, offset_matrix
+from scene import Scene
+from transformations import rotation_matrix, viewport_matrix
 
 gi.require_version('Gtk', '3.0')
 gi.require_foreign('cairo')
@@ -106,7 +103,9 @@ class NewObjectDialogHandler:
         label_wireframe = self.builder.get_object('label_wireframe')
         label_filled = self.builder.get_object('label_filled')
         if widget.get_active():
-            label_wireframe.set_markup('<span weight="normal">Wireframe</span>')
+            label_wireframe.set_markup(
+                '<span weight="normal">Wireframe</span>'
+            )
             label_filled.set_markup('<span weight="bold">Filled</span>')
         else:
             label_wireframe.set_markup('<span weight="bold">Wireframe</span>')
@@ -131,8 +130,7 @@ class MainWindowHandler:
         self.builder = builder
         self.window = builder.get_object('main_window')
         self.object_store = builder.get_object('object_store')
-        self.display_file = []
-        self.world_window = None
+        self.scene = Scene()
         self.output_buffer = builder.get_object('outputbuffer')
         self.press_start = None
         self.old_size = None
@@ -150,67 +148,56 @@ class MainWindowHandler:
         self.window.get_application().quit()
 
     def on_resize(self, widget: Gtk.Widget, allocation: Gdk.Rectangle):
-        if self.world_window is None:
+        if self.scene.window is None:
             w, h = allocation.width, allocation.height
             self.old_size = allocation
-            self.world_window = Window(
+            self.scene.window = Window(
                 Vec2(-w / 2, -h / 2),
-                Vec2(w / 2, h / 2),
+                Vec2(w / 2, h / 2)
             )
 
         w_proportion = allocation.width / self.old_size.width
         h_proportion = allocation.height / self.old_size.height
 
-        self.world_window.max = Vec2(
-            self.world_window.max.x * w_proportion,
-            self.world_window.max.y * h_proportion
+        self.scene.window.max = Vec2(
+            self.scene.window.max.x * w_proportion,
+            self.scene.window.max.y * h_proportion
         )
-        self.world_window.min = Vec2(
-            self.world_window.min.x * w_proportion,
-            self.world_window.min.y * h_proportion
+        self.scene.window.min = Vec2(
+            self.scene.window.min.x * w_proportion,
+            self.scene.window.min.y * h_proportion
         )
-
         self.old_size = allocation
 
-    def viewport(self) -> graphics.Viewport:
+        self.scene.update_ndc()
+
+    def viewport(self) -> Rect:
         widget = self.builder.get_object('drawing_area')
-        return graphics.Viewport(
-            region=Rect(
-                min=Vec2(0, 0),
-                max=Vec2(
-                    widget.get_allocated_width(),
-                    widget.get_allocated_height(),
-                ),
-            ).with_margin(40),
-            window=self.world_window,
-        )
+        return Rect(
+            min=Vec2(0, 0),
+            max=Vec2(
+                widget.get_allocated_width(),
+                widget.get_allocated_height(),
+            )
+        ).with_margin(10)
 
     def on_draw(self, widget, cr):
-        def window_to_viewport(v: Vec2):
-            window = self.world_window
-            vmin = viewport.region.min
-            vw, vh = viewport.width, viewport.height
-            return Vec2(
-                vmin.x + ((v.x - window.min.x) / window.width) * vw,
-                vmin.y + (1 - ((v.y - window.min.y) / window.height)) * vh
-            )
-
         viewport = self.viewport()
+        vp_matrix = viewport_matrix(viewport)
 
         cr.set_line_width(2.0)
         cr.paint()
         cr.set_source_rgb(0.8, 0.0, 0.0)
 
-        for obj in self.display_file:
+        for obj in self.scene.objs:
             clipped = obj.clipped(
-                self.world_window,
                 method=self.clipping_method
             )
             if clipped:
-                clipped.normalize(self.world_window)
-                clipped.draw(cr, viewport, window_to_viewport)
+                clipped.draw(cr, vp_matrix)
 
-        viewport.draw(cr)
+        cr.set_source_rgb(0.4, 0.4, 0.4)
+        viewport.draw(cr, vp_matrix)
 
     def on_new_object(self, widget):
         dialog = NewObjectDialog()
@@ -219,7 +206,8 @@ class MainWindowHandler:
         if response == Gtk.ResponseType.OK:
             if dialog.new_object is not None:
                 self.log(f'Object added: <{type(dialog.new_object).__name__}>')
-                self.add_object(dialog.new_object)
+                self.scene.add_object(dialog.new_object)
+                self.add_to_treeview(dialog.new_object)
                 self.builder.get_object('drawing_area').queue_draw()
             else:
                 self.log('ERROR: invalid object')
@@ -231,7 +219,7 @@ class MainWindowHandler:
         about_dialog = Gtk.AboutDialog(
             None,
             authors=['Arthur Bridi Guazzelli', 'João Paulo T. I. Z.'],
-            version='1.4.0',
+            version='1.4.1',
             program_name='Rudolph'
         )
         about_dialog.run()
@@ -248,8 +236,8 @@ class MainWindowHandler:
             viewport = self.viewport()
 
             return Vec2(
-                (v.x / viewport.width) * self.world_window.width,
-                (v.y / viewport.height) * self.world_window.height
+                (v.x / viewport.width) * self.scene.window.width,
+                (v.y / viewport.height) * self.scene.window.height
             )
 
         # register x, y
@@ -258,16 +246,14 @@ class MainWindowHandler:
             current = Vec2(-event.x, event.y)
             delta = viewport_to_window(current - self.press_start)
 
-            window = self.world_window
-            center = window.center()
+            window = self.scene.window
 
             m = rotation_matrix(window.angle)
 
             delta = delta @ m
 
+            self.scene.translate_window(delta)
             self.press_start = current
-            self.world_window.min += delta
-            self.world_window.max += delta
             widget.queue_draw()
 
     def on_button_release(self, widget, event):
@@ -276,9 +262,9 @@ class MainWindowHandler:
 
     def on_scroll(self, widget, event):
         if event.direction == Gdk.ScrollDirection.UP:
-            self.world_window.zoom(0.5)
+            self.scene.zoom_window(0.5)
         elif event.direction == Gdk.ScrollDirection.DOWN:
-            self.world_window.zoom(2.0)
+            self.scene.zoom_window(2.0)
 
         widget.queue_draw()
 
@@ -295,13 +281,13 @@ class MainWindowHandler:
         }
 
         op, *args = TRANSFORMATIONS[widget.get_name()]
+        if op == 'translate':
+            args[0] = (
+                args[0] @ rotation_matrix(self.scene.window.angle)
+            )
 
         for obj in self.selected_objs():
             if op == 'translate':
-                args[0] = (
-                    args[0] @
-                    rotation_matrix(self.world_window.angle)
-                )
                 obj.translate(*args)
             elif op == 'scale':
                 obj.scale(*args)
@@ -320,7 +306,7 @@ class MainWindowHandler:
                 }[self.rotation_ref]
 
                 obj.rotate(*args, ref)
-            obj.normalize(self.world_window)
+            obj.update_ndc(self.scene.window)
 
         self.window.queue_draw()
 
@@ -328,13 +314,9 @@ class MainWindowHandler:
         tree = self.builder.get_object('tree-displayfiles')
         store, rows = tree.get_selection().get_selected_rows()
 
-        return (self.display_file[int(str(index))] for index in rows)
+        return (self.scene.objs[int(str(index))] for index in rows)
 
-    def add_object(self, obj: GraphicObject):
-        window = self.world_window or Rect(Vec2(-1, -1), Vec2(1, 1))
-
-        obj.normalize(window)
-        self.display_file.append(obj)
+    def add_to_treeview(self, obj: GraphicObject):
         self.object_store.append([
             obj.name,
             str(f'<{type(obj).__name__}>')
@@ -347,15 +329,8 @@ class MainWindowHandler:
         for path in reversed(paths):
             iter = store.get_iter(path)
             store.remove(iter)
-            self.display_file.pop(int(str(path)))
+            self.scene.remove_objects([int(str(path))])
         self.window.queue_draw()
-
-    def on_toggle_fixed_window(self, checkbox: Gtk.ToggleButton):
-        editable = checkbox.get_active()
-        for widget_id in ['window-width', 'window-height']:
-            widget = self.builder.get_object(widget_id)
-            widget.set_editable(editable)
-            widget.set_can_focus(editable)
 
     def on_change_rotation_ref(self, widget: Gtk.RadioButton):
         for w in widget.get_group():
@@ -372,98 +347,81 @@ class MainWindowHandler:
     def on_new_file(self, item):
         self.log('NEW FILE')
         # Translate world_window center to (0, 0) and wipe display_file
-        self.display_file.clear()
+        self.scene = Scene()
         self.object_store.clear()
         self.current_file = None
         self.builder.get_object('drawing_area').queue_draw()
 
     def on_open_file(self, item):
+        file_chooser = self.new_file_chooser(Gtk.FileChooserAction.OPEN)
+
+        response = file_chooser.run()
+        if response == Gtk.ResponseType.OK:
+            path = file_chooser.get_filename()
+            self.log(f'OPEN FILE: {path}')
+
+            old_window = self.scene.window
+            self.scene = Scene.load(path)
+            self.scene.window = old_window
+            self.scene.update_ndc()
+
+            self.object_store.clear()
+            for obj in self.scene.objs:
+                self.add_to_treeview(obj)
+
+            self.current_file = path
+            self.builder.get_object('drawing_area').queue_draw()
+        file_chooser.destroy()
+
+    def on_save_file(self, item):
+        label = item.get_label()
+        if label == 'gtk-save' and self.current_file is not None:
+            self.scene.save(self.current_file)
+            self.log(f'SAVE FILE: {self.current_file}')
+
+        elif label == 'gtk-save-as' or self.current_file is None:
+            file_chooser = self.new_file_chooser(Gtk.FileChooserAction.SAVE)
+
+            response = file_chooser.run()
+            if response == Gtk.ResponseType.OK:
+                path = file_chooser.get_filename()
+                self.log(path)
+                self.scene.save(path)
+                self.current_file = path
+                self.log(f'SAVE AS FILE: {path}')
+            file_chooser.destroy()
+
+    def new_file_chooser(self, action):
         file_chooser = Gtk.FileChooserDialog(
-            title='Open File',
             parent=self.window,
-            action=Gtk.FileChooserAction.OPEN,
+            action=action,
             buttons=(
                 Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                Gtk.STOCK_OPEN, Gtk.ResponseType.OK
+                Gtk.STOCK_OK, Gtk.ResponseType.OK
             )
         )
+
+        if action == Gtk.FileChooserAction.OPEN:
+            file_chooser.title = 'Open file'
+
+        elif action == Gtk.FileChooserAction.SAVE:
+            file_chooser.title = 'Save file'
+            file_chooser.set_current_name('untitled.obj')
 
         filter = Gtk.FileFilter()
         filter.set_name('CG OBJ')
         filter.add_pattern('*.obj')
         file_chooser.add_filter(filter)
 
-        response = file_chooser.run()
-        if response == Gtk.ResponseType.OK:
-            self.log('OPEN FILE:')
-            path = file_chooser.get_filename()
-            self.log(path)
-            file = open(path)
-            contents = file.read()
-            scene = ObjCodec.decode(contents)
-            self.display_file.clear()
-            self.object_store.clear()
-            for obj in scene.objs:
-                self.add_object(obj)
-
-            self.log(f'{contents}\n')
-            file.close()
-            self.current_file = path
-            self.builder.get_object('drawing_area').queue_draw()
-
-        file_chooser.destroy()
-
-    def on_save_file(self, item):
-        label = item.get_label()
-        if label == 'gtk-save' and self.current_file is not None:
-            file = open(self.current_file, 'w+')
-            scene = Scene(window=self.world_window, objs=self.display_file)
-            contents = ObjCodec.encode(scene)
-            file.write(contents)
-            file.close()
-
-        elif label == 'gtk-save-as' or self.current_file is None:
-            file_chooser = Gtk.FileChooserDialog(
-                title='Save File',
-                parent=self.window,
-                action=Gtk.FileChooserAction.SAVE,
-                buttons=(
-                    Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                    Gtk.STOCK_SAVE_AS, Gtk.ResponseType.OK
-                )
-            )
-
-            filter = Gtk.FileFilter()
-            filter.set_name('CG OBJ')
-            filter.add_pattern('*.obj')
-            file_chooser.add_filter(filter)
-
-            file_chooser.set_current_name('untitled.obj')
-
-            response = file_chooser.run()
-            if response == Gtk.ResponseType.OK:
-                if label == 'gtk-save':
-                    self.log('SAVE FILE:')
-                elif label == 'gtk-save-as':
-                    self.log('SAVE AS FILE:')
-                path = file_chooser.get_filename()
-                self.log(path)
-                file = open(path, 'w+')
-                scene = Scene(window=self.world_window, objs=self.display_file)
-                contents = ObjCodec.encode(scene)
-                file.write(contents)
-                file.close()
-                self.current_file = path
-            file_chooser.destroy()
+        return file_chooser
 
     def on_clicked_rotate_window(self, widget: Gtk.Button):
-        self.world_window.angle += int(entry_text(self, 'window-rot-entry'))
-        self.normalize()
+        rotation_angle = int(entry_text(self, 'window-rot-entry'))
+        self.scene.window.angle += rotation_angle
+        for obj in self.scene.objs:
+            obj.update_ndc(self.scene.window)
+        self.log(f'Window rotated {rotation_angle} degrees')
         self.window.queue_draw()
-
-    def normalize(self):
-        for obj in self.display_file:
-            obj.normalize(self.world_window)
 
     def on_change_clipping_method(self, widget: Gtk.ComboBoxText):
         METHODS = {
