@@ -1,3 +1,4 @@
+from __future__ import annotations
 from graphics import Vec2, Point, Line, Polygon, Window
 
 

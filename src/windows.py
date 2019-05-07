@@ -167,8 +167,9 @@ class MainWindowHandler:
             self.scene.window.min.x * w_proportion,
             self.scene.window.min.y * h_proportion
         )
-
         self.old_size = allocation
+
+        self.scene.update_ndc()
 
     def viewport(self) -> Rect:
         widget = self.builder.get_object('drawing_area')
@@ -361,6 +362,7 @@ class MainWindowHandler:
             old_window = self.scene.window
             self.scene = Scene.load(path)
             self.scene.window = old_window
+            self.scene.update_ndc()
 
             self.object_store.clear()
             for obj in self.scene.objs:

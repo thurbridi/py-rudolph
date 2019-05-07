@@ -1,4 +1,3 @@
-import numpy as np
 from typing import List, Iterable
 
 from linalg import Vec2
@@ -34,7 +33,6 @@ class Scene:
     def update_ndc(self):
         for obj in self.objs:
             obj.update_ndc(self.window)
-
 
     @classmethod
     def load(self, path: str):
