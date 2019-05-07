@@ -3,9 +3,7 @@ from enum import auto, Enum
 from typing import List, Optional
 import copy
 
-import numpy
-
-from graphics import Line, Polygon, Vec2, Window
+from graphics import Line, Polygon, Vec2
 
 
 class LineClippingMethod(Enum):
@@ -164,94 +162,64 @@ def poly_iter(vertices: List[Vec2]):
     yield v1, vertices[0]
 
 
-def poly_clip(
-    poly: Polygon,
-    window: Window,
-    method: LineClippingMethod,
-) -> Optional[Polygon]:
-    class Case(Enum):
-        OUT_OUT = auto()
-        OUT_IN = auto()
-        IN_OUT = auto()
-        IN_IN = auto()
+def poly_clip(poly: Polygon) -> Optional[Polygon]:
+    new_poly = copy.deepcopy(poly)
 
-    def check_case(r: List[CohenRegion], _dir: CohenRegion):
-        r = [_r & _dir for _r in r]
-        if (r[0] != CohenRegion.INSIDE and r[1] != CohenRegion.INSIDE):
-            return Case.OUT_OUT
+    def clip_region(vertices, clipping_region):
+        clipped = []
+        for v1, v2 in poly_iter(vertices):
+            regions = [
+                CohenRegion.region_of(v) & clipping_region for v in [v1, v2]
+            ]
 
-        if (r[0] != CohenRegion.INSIDE and r[1] == CohenRegion.INSIDE):
-            return Case.OUT_IN
+            if all([region != clipping_region for region in regions]):
+                clipped.extend([v1, v2])
+            elif all([region == clipping_region for region in regions]):
+                continue
+            elif any([region == clipping_region for region in regions]):
+                clip_index = 0 if regions[0] == clipping_region else 1
 
-        if (r[0] == CohenRegion.INSIDE and r[1] != CohenRegion.INSIDE):
-            return Case.IN_OUT
+                dx, dy, _ = v2 - v1
+                m = dx / dy
 
-        if (r[0] == CohenRegion.INSIDE and r[1] == CohenRegion.INSIDE):
-            return Case.IN_IN
+                if clipping_region == CohenRegion.TOP:
+                    x = v1.x + m * (1 - v1.y)
+                    y = 1
+                elif clipping_region == CohenRegion.BOTTOM:
+                    x = v1.x + m * (-1 - v1.y)
+                    y = -1
+                elif clipping_region == CohenRegion.RIGHT:
+                    x = 1
+                    y = v1.y + (1 - v1.x) / m
+                elif clipping_region == CohenRegion.LEFT:
+                    x = -1
+                    y = v1.y + (-1 - v1.x) / m
 
-    # Each of window's side
-    WINDOWS = {
-        CohenRegion.LEFT: Window(
-            min=Vec2(window.min.x, -numpy.inf),
-            max=Vec2(window.min.x, numpy.inf),
-        ),
-        CohenRegion.RIGHT: Window(
-            min=Vec2(window.max.x, -numpy.inf),
-            max=Vec2(window.max.x, numpy.inf),
-        ),
-        CohenRegion.BOTTOM: Window(
-            min=Vec2(-numpy.inf, window.min.y),
-            max=Vec2(numpy.inf, window.min.y),
-        ),
-        CohenRegion.TOP: Window(
-            min=Vec2(-numpy.inf, window.max.y),
-            max=Vec2(numpy.inf, window.max.y),
-        ),
+                if clip_index == 0:
+                    v1 = Vec2(x, y)
+                else:
+                    v2 = Vec2(x, y)
+                clipped.extend([v1, v2])
+        return clipped
 
-    }
+    new_poly.vertices_ndc = clip_region(
+        new_poly.vertices_ndc,
+        CohenRegion.LEFT
+    )
 
-    lines = [
-        Line(v1, v2)
-        for v1, v2 in poly_iter(poly.vertices)
-    ]
+    new_poly.vertices_ndc = clip_region(
+        new_poly.vertices_ndc,
+        CohenRegion.TOP
+    )
 
-    v = []
+    new_poly.vertices_ndc = clip_region(
+        new_poly.vertices_ndc,
+        CohenRegion.RIGHT
+    )
 
-    # fills v
-    for _dir in [
-        CohenRegion.LEFT,
-        CohenRegion.RIGHT,
-        CohenRegion.BOTTOM,
-        CohenRegion.TOP,
-    ]:
-        _v = []
-        for line in lines:
-            clipped = line_clip(
-                line,
-                WINDOWS[_dir],
-                method
-            )
+    new_poly.vertices_ndc = clip_region(
+        new_poly.vertices_ndc,
+        CohenRegion.BOTTOM
+    )
 
-            case = check_case(
-                [
-                    CohenRegion.region_of(line.start, window),
-                    CohenRegion.region_of(line.end, window),
-                ],
-                _dir
-            )
-
-            if case == Case.OUT_IN:
-                _v.extend([clipped.start, line.end])
-            elif case == Case.IN_IN:
-                _v.extend([line.start, line.end])
-            elif case == Case.IN_OUT:
-                _v.extend([line.start, clipped.end])
-        lines = [
-            Line(v1, v2)
-            for v1, v2 in poly_iter(_v)
-        ]
-        v = _v
-
-    p = Polygon(v, filled=poly.filled)
-
-    return p
+    return new_poly

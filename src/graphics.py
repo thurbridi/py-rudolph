@@ -156,7 +156,7 @@ class Polygon(GraphicObject):
             cr: Context,
             vp_matrix: np.ndarray
     ):
-        for i in range(0, len(self.vertices)):
+        for i in range(0, len(self.vertices_ndc)):
             next_vp = self.vertices_ndc[i] @ vp_matrix
             cr.line_to(next_vp.x, next_vp.y)
         cr.close_path()
@@ -167,22 +167,10 @@ class Polygon(GraphicObject):
         else:
             cr.stroke()
 
-    def clipped(
-        self,
-        method: 'LineClippingMethod',
-    ) -> Optional['Polygon']:
+    def clipped(self, *args, **kwargs) -> Optional['Polygon']:
         from clipping import poly_clip
-        center = window.centroid
 
-        m = (
-            offset_matrix(-center.x, -center.y) @
-            rotation_matrix(-window.angle) @
-            offset_matrix(center.x, center.y)
-        )
-
-        p = Polygon([v @ m for v in self.vertices], filled=self.filled)
-
-        return poly_clip(p, window, method)
+        return poly_clip(self)
 
 
 class Rect(GraphicObject):
