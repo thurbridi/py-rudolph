@@ -9,6 +9,7 @@ from graphics import (
     Line,
     Point,
     Polygon,
+    Curve,
     Rect,
     Vec2,
     Window,
@@ -23,7 +24,8 @@ gi.require_foreign('cairo')
 NB_PAGES = {
     0: 'point',
     1: 'line',
-    2: 'polygon'
+    2: 'polygon',
+    3: 'curve',
 }
 
 BUTTON_EVENTS = {
@@ -81,6 +83,18 @@ class NewObjectDialogHandler:
                     name=name,
                     filled=filled
                 )
+        elif NB_PAGES[page_num] == 'curve':
+            if self.builder.get_object('btn_bezier').get_active():
+                type = 'bezier'
+            elif self.builder.get_object('btn_b-spline').get_active():
+                type = 'b-spline'
+
+            if len(self.vertices) >= 4:
+                self.dialog.new_object = Curve(
+                    self.vertices,
+                    type=type,
+                    name=name,
+                )
         else:
             raise ValueError('No page with given index.')
 
@@ -91,10 +105,16 @@ class NewObjectDialogHandler:
         window.destroy()
 
     def on_add_point(self, widget):
+        notebook = self.builder.get_object('notebook1')
+        page_num = notebook.get_current_page()
         vertice_store = self.builder.get_object('vertice_store')
 
-        x = float(entry_text(self, 'entryX3'))
-        y = float(entry_text(self, 'entryY3'))
+        if NB_PAGES[page_num] == 'polygon':
+            x = float(entry_text(self, 'entryX3'))
+            y = float(entry_text(self, 'entryY3'))
+        elif NB_PAGES[page_num] == 'curve':
+            x = float(entry_text(self, 'entryX4'))
+            y = float(entry_text(self, 'entryY4'))
 
         vertice_store.append([x, y, 1])
         self.vertices.append(Vec2(x, y))

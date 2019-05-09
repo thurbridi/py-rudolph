@@ -126,11 +126,7 @@ class Line(GraphicObject):
     def end(self, value: Vec2):
         self.vertices[1] = value
 
-    def draw(
-            self,
-            cr: Context,
-            vp_matrix: np.ndarray
-    ):
+    def draw(self, cr: Context, vp_matrix: np.ndarray):
         start_vp, end_vp = [v @ vp_matrix for v in self.vertices_ndc]
 
         cr.move_to(start_vp.x, start_vp.y)
@@ -171,6 +167,18 @@ class Polygon(GraphicObject):
         from clipping import poly_clip
 
         return poly_clip(self)
+
+
+class Curve(GraphicObject):
+    def __init__(self, vertices, type='bezier', name=''):
+        super().__init__(vertices=vertices, name=name)
+        self.type = type
+
+    def draw(self, cr: Context, vp_matrix: np.ndarray):
+        if self.type == 'bezier':
+            pass
+        elif self.type == 'b-spline':
+            pass
 
 
 class Rect(GraphicObject):
