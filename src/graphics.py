@@ -174,11 +174,57 @@ class Curve(GraphicObject):
         super().__init__(vertices=vertices, name=name)
         self.type = type
 
+    @property
+    def n_curves(self) -> int:
+        return int((len(self.vertices) - 1) / 3)
+
+    @property
+    def vertices_x(self):
+        return np.array([v.x for v in self.vertices_ndc], dtype=float)
+
+    @property
+    def vertices_y(self):
+        return np.array([v.y for v in self.vertices_ndc], dtype=float)
+
+    def bezier_matrix(self):
+        return np.array(
+            [
+                -1, 3, -3, 1,
+                3, -6, 3, 0,
+                -3, 3, 0, 0,
+                1, 0, 0, 0
+            ],
+            dtype=float
+        ).reshape(4, 4)
+
     def draw(self, cr: Context, vp_matrix: np.ndarray):
+        # debugging geometry draw
+        cr.save()
+        cr.set_dash({10, 5})
+        cr.set_source_rgb(0.2, 0.2, 0.2)
+        for i in range(0, len(self.vertices_ndc)):
+            next_vp = self.vertices_ndc[i] @ vp_matrix
+            cr.line_to(next_vp.x, next_vp.y)
+        cr.stroke()
+        cr.restore()
+
+        n_points = 20
+        curve_points = []
         if self.type == 'bezier':
-            pass
+            for k in range(self.n_curves):
+                for t in np.linspace(0, 1, n_points):
+                    T = np.array([t**3, t**2, t, 1], dtype=float)
+                    M = T @ self.bezier_matrix()
+                    x = M @ self.vertices_x[k * 3:k * 3 + 4]
+                    y = M @ self.vertices_y[k * 3:k * 3 + 4]
+                    curve_points.append(Vec2(x, y))
         elif self.type == 'b-spline':
             pass
+
+        for i in range(0, len(curve_points)):
+            next_vp = curve_points[i] @ vp_matrix
+            cr.line_to(next_vp.x, next_vp.y)
+        cr.stroke()
 
 
 class Rect(GraphicObject):
