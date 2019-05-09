@@ -21,7 +21,7 @@ class GraphicObject(ABC):
         super().__init__()
         self.name = name
         self.vertices: List[Vec2] = vertices
-        self.vertices_ndc: List[Vec2] = []
+        self.vertices_ndc: List[Vec2] = vertices
 
     @abstractmethod
     def draw(
@@ -197,18 +197,7 @@ class Curve(GraphicObject):
             dtype=float
         ).reshape(4, 4)
 
-    def draw(self, cr: Context, vp_matrix: np.ndarray):
-        # debugging geometry draw
-        cr.save()
-        cr.set_dash({10, 5})
-        cr.set_source_rgb(0.2, 0.2, 0.2)
-        for i in range(0, len(self.vertices_ndc)):
-            next_vp = self.vertices_ndc[i] @ vp_matrix
-            cr.line_to(next_vp.x, next_vp.y)
-        cr.stroke()
-        cr.restore()
-
-        n_points = 20
+    def create_curve(self, n_points=20):
         curve_points = []
         if self.type == 'bezier':
             for k in range(self.n_curves):
@@ -221,10 +210,29 @@ class Curve(GraphicObject):
         elif self.type == 'b-spline':
             pass
 
-        for i in range(0, len(curve_points)):
-            next_vp = curve_points[i] @ vp_matrix
+        self.curve_points = curve_points
+
+    def draw(self, cr: Context, vp_matrix: np.ndarray):
+        # debugging geometry draw
+        cr.save()
+        cr.set_dash({10, 5})
+        cr.set_source_rgb(0.2, 0.2, 0.2)
+        for i in range(0, len(self.vertices_ndc)):
+            next_vp = self.vertices_ndc[i] @ vp_matrix
             cr.line_to(next_vp.x, next_vp.y)
         cr.stroke()
+        cr.restore()
+
+        for i in range(len(self.curve_points)):
+            next_vp = self.curve_points[i] @ vp_matrix
+            cr.line_to(next_vp.x, next_vp.y)
+        cr.stroke()
+
+    def clipped(self, *args, **kwargs):
+        from clipping import curve_clip
+        self.create_curve(n_points=20)
+
+        return curve_clip(self)
 
 
 class Rect(GraphicObject):

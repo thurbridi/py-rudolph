@@ -223,3 +223,18 @@ def poly_clip(poly: Polygon) -> Optional[Polygon]:
     )
 
     return new_poly
+
+
+def curve_clip(curve):
+    new_curve = copy.deepcopy(curve)
+
+    clipped = []
+    for i in range(len(curve.curve_points) - 1):
+        segment = line_clip(
+            Line(curve.curve_points[i], curve.curve_points[i + 1])
+        )
+        if segment:
+            clipped.extend([segment.start, segment.end])
+    new_curve.curve_points = clipped
+
+    return new_curve
