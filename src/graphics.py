@@ -21,7 +21,7 @@ class GraphicObject(ABC):
         super().__init__()
         self.name = name
         self.vertices: List[Vec2] = vertices
-        self.vertices_ndc: List[Vec2] = []
+        self.vertices_ndc: List[Vec2] = vertices
 
     @abstractmethod
     def draw(
@@ -126,11 +126,7 @@ class Line(GraphicObject):
     def end(self, value: Vec2):
         self.vertices[1] = value
 
-    def draw(
-            self,
-            cr: Context,
-            vp_matrix: np.ndarray
-    ):
+    def draw(self, cr: Context, vp_matrix: np.ndarray):
         start_vp, end_vp = [v @ vp_matrix for v in self.vertices_ndc]
 
         cr.move_to(start_vp.x, start_vp.y)
@@ -171,6 +167,57 @@ class Polygon(GraphicObject):
         from clipping import poly_clip
 
         return poly_clip(self)
+
+
+class Curve(GraphicObject):
+    def __init__(self, vertices, type='bezier', name=''):
+        super().__init__(vertices=vertices, name=name)
+        self.control_points = vertices
+        self.type = type
+        self.vertices = self.create_curve(n_points=20)
+
+    @property
+    def n_curves(self) -> int:
+        return int((len(self.control_points) - 1) / 3)
+
+    def bezier_matrix(self):
+        return np.array(
+            [
+                -1, 3, -3, 1,
+                3, -6, 3, 0,
+                -3, 3, 0, 0,
+                1, 0, 0, 0
+            ],
+            dtype=float
+        ).reshape(4, 4)
+
+    def create_curve(self, n_points=20):
+        proj_x = np.array([v.x for v in self.control_points], dtype=float)
+        proj_y = np.array([v.y for v in self.control_points], dtype=float)
+
+        curve_points = []
+        if self.type == 'bezier':
+            for k in range(self.n_curves):
+                for t in np.linspace(0, 1, n_points):
+                    T = np.array([t**3, t**2, t, 1], dtype=float)
+                    M = T @ self.bezier_matrix()
+                    x = M @ proj_x[k * 3:k * 3 + 4]
+                    y = M @ proj_y[k * 3:k * 3 + 4]
+                    curve_points.append(Vec2(x, y))
+        elif self.type == 'b-spline':
+            pass
+
+        return curve_points
+
+    def draw(self, cr: Context, vp_matrix: np.ndarray):
+        for i in range(len(self.vertices_ndc)):
+            next_vp = self.vertices_ndc[i] @ vp_matrix
+            cr.line_to(next_vp.x, next_vp.y)
+        cr.stroke()
+
+    def clipped(self, *args, **kwargs):
+        from clipping import curve_clip
+        return curve_clip(self)
 
 
 class Rect(GraphicObject):
