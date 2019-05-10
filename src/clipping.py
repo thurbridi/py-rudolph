@@ -229,12 +229,12 @@ def curve_clip(curve):
     new_curve = copy.deepcopy(curve)
 
     clipped = []
-    for i in range(len(curve.curve_points) - 1):
+    for i in range(len(curve.vertices_ndc) - 1):
         segment = line_clip(
-            Line(curve.curve_points[i], curve.curve_points[i + 1])
+            Line(curve.vertices_ndc[i], curve.vertices_ndc[i + 1])
         )
         if segment:
             clipped.extend([segment.start, segment.end])
-    new_curve.curve_points = clipped
+    new_curve.vertices_ndc = clipped
 
     return new_curve
