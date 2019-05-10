@@ -13,9 +13,17 @@ class Vec2(np.ndarray):
     def x(self) -> float:
         return self[0]
 
+    @x.setter
+    def x(self, value):
+        self[0] = value
+
     @property
     def y(self) -> float:
         return self[1]
+
+    @y.setter
+    def y(self, value):
+        self[1] = value
 
 
 class Vec3(np.ndarray):

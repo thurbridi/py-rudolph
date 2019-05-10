@@ -1,4 +1,5 @@
-from graphics import Scene, Vec2, Point, Line, Polygon, Rect
+from __future__ import annotations
+from graphics import Vec2, Point, Line, Polygon, Window
 
 
 class ObjCodec:
@@ -7,7 +8,7 @@ class ObjCodec:
         return f'{v.x} {v.y} 1.0'
 
     @classmethod
-    def encode(cls, scene: Scene) -> str:
+    def encode(cls, scene: 'Scene') -> str:
         # Writes a subset of the Wavefront OBJ file format in ASCII
         vertices_txt = ''
         objects_txt = ''
@@ -51,7 +52,8 @@ class ObjCodec:
         return vertices_txt + objects_txt
 
     @classmethod
-    def decode(cls, obj_file: str) -> Scene:
+    def decode(cls, obj_file: str) -> 'Scene':
+        from scene import Scene
         # Returns a Scene with the window and objects found
         vertices = []
         objs = []
@@ -66,7 +68,7 @@ class ObjCodec:
             if cmd == 'v':
                 vertices.append(Vec2(float(args[0]), float(args[1])))
             elif cmd == 'o':
-                current_name = args[0]
+                current_name = ' '.join(args)
             elif cmd == 'usemtl':
                 if args[0] == 'filled':
                     filled = True
@@ -93,9 +95,9 @@ class ObjCodec:
                     )
                     filled = False
             elif cmd == 'w':
-                window = Rect(
+                window = Window(
                     min=vertices[int(args[0]) - 1],
                     max=vertices[int(args[1]) - 1]
                 )
 
-        return Scene(objs=objs, window=window)
+        return Scene(objs=objs, window=None)
