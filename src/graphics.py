@@ -1,11 +1,12 @@
 '''Contains displayable object definitions.'''
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from typing import Optional, List
 
 import numpy as np
 from cairo import Context
 
-from linalg import Vec2
+from linalg import Vec2, Vec3
 from transformations import (
     offset_matrix,
     scale_matrix,
@@ -174,7 +175,7 @@ class Curve(GraphicObject):
         super().__init__(vertices=vertices, name=name)
         self.control_points = vertices
         self.type = type
-        self.vertices = self.create_curve(n_points=20)
+        self.vertices = self.create_curve()
 
     @property
     def n_curves(self) -> int:
@@ -191,23 +192,82 @@ class Curve(GraphicObject):
             dtype=float
         ).reshape(4, 4)
 
+    def bspline_matrix(self):
+        return np.array(
+            [
+                -1, 3, -3, 1,
+                3, -6, 3, 0,
+                -3, 0, 3, 0,
+                1, 4, 1, 0
+            ],
+            dtype=float
+        ).reshape(4, 4) / 6
+
+    def ff_matrix(delta):
+        d = delta
+        return np.array([
+                0, 0, 0, 1,
+                d**3, d**2, d, 0,
+                6*d**3, 2*d**2, 0, 0,
+                6*d**3, 0, 0, 0,
+            ],
+            dtype=float
+        ).reshape(4, 4)
+
     def create_curve(self, n_points=20):
         proj_x = np.array([v.x for v in self.control_points], dtype=float)
         proj_y = np.array([v.y for v in self.control_points], dtype=float)
 
-        curve_points = []
+        points = []
+
         if self.type == 'bezier':
-            for k in range(self.n_curves):
+            bezier_matrix = self.bezier_matrix()
+            for k in range(0, self.n_curves * 3, 3):
                 for t in np.linspace(0, 1, n_points):
                     T = np.array([t**3, t**2, t, 1], dtype=float)
-                    M = T @ self.bezier_matrix()
-                    x = M @ proj_x[k * 3:k * 3 + 4]
-                    y = M @ proj_y[k * 3:k * 3 + 4]
-                    curve_points.append(Vec2(x, y))
+                    M = T @ bezier_matrix
+                    x = M @ proj_x[k:k + 4]
+                    y = M @ proj_y[k:k + 4]
+                    points.append(Vec2(x, y))
         elif self.type == 'b-spline':
-            pass
+            mbs = self.bspline_matrix()
+            p = self.control_points
 
-        return curve_points
+            gbs = [
+                [
+                    Vec3(*p[i-3]),
+                    Vec3(*p[i-2]),
+                    Vec3(*p[i-1]),
+                    Vec3(*p[i]),
+                ]
+                for i in range(self.n_curves)
+            ]
+
+            C = mbs * gbs[0]
+
+            dv = Curve.ff_matrix(1/n_points) * C
+
+            v = Vec3(*p[0])
+            points.append(v)
+
+            print(f'gbs:\n{gbs}')
+            print(f'C:\n{C}')
+            print(f'v:\n{v}')
+            print(f'dv:\n{dv}')
+
+            for i in range(self.n_curves * 3):
+                v += dv[0]
+                dv[0] += dv[1]
+                dv[1] += dv[2]
+
+                points.append(deepcopy(v))
+                print(f'v:\n{v}')
+                print(f'points: {points}')
+
+            points = [Vec2(*list(p)[:2]) for p in points]
+            print(f'points: {points}')
+
+        return points
 
     def draw(self, cr: Context, vp_matrix: np.ndarray):
         for i in range(len(self.vertices_ndc)):
