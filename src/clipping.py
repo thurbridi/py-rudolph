@@ -173,7 +173,7 @@ def poly_clip(poly: Polygon) -> Optional[Polygon]:
             ]
 
             if all([region != clipping_region for region in regions]):
-                clipped.extend([v2])
+                clipped.extend([v1, v2])
             elif all([region == clipping_region for region in regions]):
                 continue
             elif any([region == clipping_region for region in regions]):
@@ -197,10 +197,9 @@ def poly_clip(poly: Polygon) -> Optional[Polygon]:
 
                 if clip_index == 0:
                     v1 = Vec2(x, y)
-                    clipped.extend([v1, v2])
                 else:
                     v2 = Vec2(x, y)
-                    clipped.extend([v2])
+                clipped.extend([v1, v2])
         return clipped
 
     new_poly.vertices_ndc = clip_region(
