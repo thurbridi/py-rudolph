@@ -366,8 +366,9 @@ class MainWindowHandler:
 
     def on_new_file(self, item):
         self.log('NEW FILE')
-        # Translate world_window center to (0, 0) and wipe display_file
+        old_window = self.scene.window
         self.scene = Scene()
+        self.scene.window = old_window
         self.object_store.clear()
         self.current_file = None
         self.builder.get_object('drawing_area').queue_draw()
