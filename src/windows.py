@@ -90,7 +90,7 @@ class NewObjectDialogHandler:
                 type = 'b-spline'
 
             if len(self.vertices) >= 4:
-                self.dialog.new_object = Curve(
+                self.dialog.new_object = Curve.from_control_points(
                     self.vertices,
                     type=type,
                     name=name,
@@ -366,16 +366,8 @@ class MainWindowHandler:
 
     def on_new_file(self, item):
         self.log('NEW FILE')
-        # Translate world_window center to (0, 0) and wipe display_file
-
-        w, h = self.old_size.width, self.old_size.height
-        self.scene = Scene(
-            window=Window(
-                min=Vec2(-w / 2, -h / 2),
-                max=Vec2(w / 2, h / 2)
-            )
-        )
-
+        old_window = self.scene.window
+        self.scene = Scene(window=old_window)
         self.object_store.clear()
         self.current_file = None
         self.builder.get_object('drawing_area').queue_draw()
