@@ -90,7 +90,7 @@ class NewObjectDialogHandler:
                 type = 'b-spline'
 
             if len(self.vertices) >= 4:
-                self.dialog.new_object = Curve(
+                self.dialog.new_object = Curve.from_control_points(
                     self.vertices,
                     type=type,
                     name=name,
