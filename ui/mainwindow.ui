@@ -156,7 +156,7 @@
                         <property name="image">img_delete</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="remove_selected_objects" swapped="no"/>
-                        <accelerator key="d" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                        <accelerator key="Delete" signal="activate"/>
                       </object>
                     </child>
                   </object>
