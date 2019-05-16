@@ -228,13 +228,64 @@ def poly_clip(poly: Polygon) -> Optional[Polygon]:
 def curve_clip(curve):
     new_curve = copy.deepcopy(curve)
 
-    clipped = []
-    for i in range(len(curve.vertices_ndc) - 1):
-        segment = line_clip(
-            Line(curve.vertices_ndc[i], curve.vertices_ndc[i + 1])
-        )
-        if segment:
-            clipped.extend([segment.start, segment.end])
-    new_curve.vertices_ndc = clipped
+    def clip_region(vertices, clipping_region):
+        clipped = []
+        for i in range(len(vertices) - 1):
+            v1 = vertices[i]
+            v2 = vertices[i + 1]
+
+            regions = [
+                CohenRegion.region_of(v) & clipping_region for v in [v1, v2]
+            ]
+
+            if all([region != clipping_region for region in regions]):
+                clipped.extend([v1, v2])
+            elif all([region == clipping_region for region in regions]):
+                continue
+            elif any([region == clipping_region for region in regions]):
+                clip_index = 0 if regions[0] == clipping_region else 1
+
+                dx, dy, _ = v2 - v1
+                m = dx / dy
+
+                if clipping_region == CohenRegion.TOP:
+                    x = v1.x + m * (1 - v1.y)
+                    y = 1
+                elif clipping_region == CohenRegion.BOTTOM:
+                    x = v1.x + m * (-1 - v1.y)
+                    y = -1
+                elif clipping_region == CohenRegion.RIGHT:
+                    x = 1
+                    y = v1.y + (1 - v1.x) / m
+                elif clipping_region == CohenRegion.LEFT:
+                    x = -1
+                    y = v1.y + (-1 - v1.x) / m
+
+                if clip_index == 0:
+                    v1 = Vec2(x, y)
+                else:
+                    v2 = Vec2(x, y)
+                clipped.extend([v1, v2])
+        return clipped
+
+    new_curve.vertices_ndc = clip_region(
+        new_curve.vertices_ndc,
+        CohenRegion.LEFT
+    )
+
+    new_curve.vertices_ndc = clip_region(
+        new_curve.vertices_ndc,
+        CohenRegion.TOP
+    )
+
+    new_curve.vertices_ndc = clip_region(
+        new_curve.vertices_ndc,
+        CohenRegion.RIGHT
+    )
+
+    new_curve.vertices_ndc = clip_region(
+        new_curve.vertices_ndc,
+        CohenRegion.BOTTOM
+    )
 
     return new_curve
