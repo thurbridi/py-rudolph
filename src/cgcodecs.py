@@ -1,5 +1,5 @@
 from __future__ import annotations
-from graphics import Vec2, Point, Line, Polygon, Window
+from graphics import Vec2, Point, Line, Polygon, Curve, Window
 
 
 class ObjCodec:
@@ -30,22 +30,35 @@ class ObjCodec:
 
                 objects_txt += f'p {idx}\n'
                 idx += 1
+
             elif obj_type == Line:
                 vertices_txt += f'v {cls.encode_vec2(obj.start)}\n'
                 vertices_txt += f'v {cls.encode_vec2(obj.end)}\n'
 
                 objects_txt += f'l {idx} {idx + 1}\n'
                 idx += 2
+
             elif obj_type == Polygon:
                 n = len(obj.vertices)
                 indexes = ''
-                for i in range(0, n):
+                for i in range(n):
                     vertices_txt += f'v {cls.encode_vec2(obj.vertices[i])}\n'
                     indexes += f'{idx + i} '
                 indexes += f'{idx}'
 
                 if obj.filled:
                     objects_txt += f'usemtl filled\n'
+                objects_txt += f'l {indexes}\n'
+                idx += n
+
+            elif obj_type == Curve:
+                n = len(obj.vertices)
+                indexes = ''
+                for i in range(0, n):
+                    vertices_txt += f'v {cls.encode_vec2(obj.vertices[i])}\n'
+                    indexes += f'{idx + i} '
+                indexes = indexes.strip()
+
                 objects_txt += f'l {indexes}\n'
                 idx += n
 
@@ -85,7 +98,7 @@ class ObjCodec:
                             name=current_name
                         )
                     )
-                else:
+                elif args[0] == args[-1]:
                     objs.append(
                         Polygon(
                             vertices=[vertices[int(i) - 1] for i in args[:-1]],
@@ -94,6 +107,13 @@ class ObjCodec:
                         )
                     )
                     filled = False
+                else:
+                    objs.append(
+                        Curve(
+                            vertices=[vertices[int(i) - 1] for i in args],
+                            name=current_name,
+                        )
+                    )
             elif cmd == 'w':
                 window = Window(
                     min=vertices[int(args[0]) - 1],
