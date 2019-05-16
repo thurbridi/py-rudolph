@@ -202,25 +202,17 @@ def poly_clip(poly: Polygon) -> Optional[Polygon]:
                 clipped.extend([v1, v2])
         return clipped
 
-    new_poly.vertices_ndc = clip_region(
-        new_poly.vertices_ndc,
-        CohenRegion.LEFT
-    )
-
-    new_poly.vertices_ndc = clip_region(
-        new_poly.vertices_ndc,
-        CohenRegion.TOP
-    )
-
-    new_poly.vertices_ndc = clip_region(
-        new_poly.vertices_ndc,
-        CohenRegion.RIGHT
-    )
-
-    new_poly.vertices_ndc = clip_region(
-        new_poly.vertices_ndc,
+    regions = [
+        CohenRegion.LEFT,
+        CohenRegion.TOP,
+        CohenRegion.RIGHT,
         CohenRegion.BOTTOM
-    )
+    ]
+    for region in regions:
+        new_poly.vertices_ndc = clip_region(
+            new_poly.vertices_ndc,
+            region
+        )
 
     return new_poly
 
@@ -268,24 +260,16 @@ def curve_clip(curve):
                 clipped.extend([v1, v2])
         return clipped
 
-    new_curve.vertices_ndc = clip_region(
-        new_curve.vertices_ndc,
-        CohenRegion.LEFT
-    )
-
-    new_curve.vertices_ndc = clip_region(
-        new_curve.vertices_ndc,
-        CohenRegion.TOP
-    )
-
-    new_curve.vertices_ndc = clip_region(
-        new_curve.vertices_ndc,
-        CohenRegion.RIGHT
-    )
-
-    new_curve.vertices_ndc = clip_region(
-        new_curve.vertices_ndc,
+    regions = [
+        CohenRegion.LEFT,
+        CohenRegion.TOP,
+        CohenRegion.RIGHT,
         CohenRegion.BOTTOM
-    )
+    ]
+    for region in regions:
+        new_curve.vertices_ndc = clip_region(
+            new_curve.vertices_ndc,
+            region
+        )
 
     return new_curve
