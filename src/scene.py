@@ -30,7 +30,6 @@ class Scene:
         self.update_ndc()
 
     def rotate_window(self):
-        pass
         self.update_ndc()
 
     def update_ndc(self):
