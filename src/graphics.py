@@ -1,12 +1,11 @@
 '''Contains displayable object definitions.'''
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from typing import Optional, List
 
 import numpy as np
 from cairo import Context
 
-from linalg import Vec2, Vec3
+from linalg import Vec2
 from transformations import (
     offset_matrix,
     scale_matrix,
