@@ -19,7 +19,7 @@ class CohenRegion:
     TOP = 0b1000
 
     @classmethod
-    def region_of(cls, v: Vec2) -> 'CohenRegion':
+    def region_of(cls, v: Vec2) -> int:
         region = CohenRegion.INSIDE
         if v.x < -1:
             region |= CohenRegion.LEFT
@@ -36,7 +36,7 @@ class CohenRegion:
 
 def cohen_sutherland_line_clip(
     line: Line
-) -> Line:
+) -> Optional[Line]:
     new_line = copy.deepcopy(line)
     start, end = new_line.vertices_ndc
     regions = [
@@ -50,7 +50,7 @@ def cohen_sutherland_line_clip(
             return new_line
         # Both outside (and in the same side)
         elif regions[0] & regions[1] != 0:
-            return
+            return None
 
         clip_index = 0 if regions[0] != CohenRegion.INSIDE else 1
 
@@ -95,12 +95,12 @@ def liang_barsky_line_clip(
     q3 = start.y - (-1)
     q4 = 1 - start.y
 
-    posarr = [1 for _ in range(5)]
-    negarr = [0 for _ in range(5)]
+    posarr = [1.0 for _ in range(5)]
+    negarr = [0.0 for _ in range(5)]
 
     if (p1 == 0 and q1 < 0
        or p3 == 0 and q3 < 0):
-        return
+        return None
 
     if p1 != 0:
         r1 = q1 / p1
@@ -128,7 +128,7 @@ def liang_barsky_line_clip(
     rn2 = min(posarr)
 
     if rn1 > rn2:
-        return
+        return None
 
     xn1 = start.x + p2 * rn1
     yn1 = start.y + p4 * rn1

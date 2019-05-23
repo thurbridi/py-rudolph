@@ -1,6 +1,6 @@
 '''Contains displayable object definitions.'''
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import Any, Optional, List
 
 import numpy as np
 from cairo import Context
@@ -67,7 +67,7 @@ class GraphicObject(ABC):
 
     def clipped(
         self,
-        method=None,
+        method: Optional[Any] = None,
     ) -> Optional['GraphicObject']:
         return self
 
@@ -135,7 +135,7 @@ class Line(GraphicObject):
 
     def clipped(
         self,
-        method: 'LineClippingMethod',
+        method: Optional['LineClippingMethod'] = None,
     ) -> Optional[GraphicObject]:
         from clipping import line_clip
 
@@ -270,16 +270,16 @@ class Rect(GraphicObject):
         super().__init__(vertices=[min, max], name=name)
 
     @property
-    def min(self):
+    def min(self) -> Vec2:
         return self.vertices[0]
-
-    @property
-    def max(self):
-        return self.vertices[1]
 
     @min.setter
     def min(self, value: Vec2):
         self.vertices[0] = value
+
+    @property
+    def max(self) -> Vec2:
+        return self.vertices[1]
 
     @max.setter
     def max(self, value: Vec2):

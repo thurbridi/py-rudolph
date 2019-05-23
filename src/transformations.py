@@ -1,7 +1,7 @@
 import numpy as np
 from math import cos, sin, radians
 
-from .linalg import Vec3
+from linalg import Vec3
 
 
 # ------------------------------------------------------------------------------

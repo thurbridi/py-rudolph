@@ -1,5 +1,8 @@
-from __future__ import annotations
-from graphics import Vec2, Point, Line, Polygon, Curve, Window
+from __future__ import annotations  # for postponed annotations
+from typing import List
+
+
+from graphics import Vec2, GraphicObject, Point, Line, Polygon, Curve, Window
 
 
 class ObjCodec:
@@ -69,7 +72,7 @@ class ObjCodec:
         from scene import Scene
         # Returns a Scene with the window and objects found
         vertices = []
-        objs = []
+        objs: List[GraphicObject] = []
         window = None
 
         current_name = ''
@@ -120,4 +123,4 @@ class ObjCodec:
                     max=vertices[int(args[1]) - 1]
                 )
 
-        return Scene(objs=objs, window=None)
+        return Scene(objs=objs, window=window)
