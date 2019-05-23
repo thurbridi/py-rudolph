@@ -25,23 +25,22 @@ class ObjCodec:
             idx += 2
 
         for obj in scene.objs:
-            obj_type = type(obj)
             objects_txt += f'o {obj.name}\n'
 
-            if obj_type == Point:
+            if isinstance(obj, Point):
                 vertices_txt += f'v {cls.encode_vec2(obj.pos)}\n'
 
                 objects_txt += f'p {idx}\n'
                 idx += 1
 
-            elif obj_type == Line:
+            elif isinstance(obj, Line):
                 vertices_txt += f'v {cls.encode_vec2(obj.start)}\n'
                 vertices_txt += f'v {cls.encode_vec2(obj.end)}\n'
 
                 objects_txt += f'l {idx} {idx + 1}\n'
                 idx += 2
 
-            elif obj_type == Polygon:
+            elif isinstance(obj, Polygon):
                 n = len(obj.vertices)
                 indexes = ''
                 for i in range(n):
@@ -54,7 +53,7 @@ class ObjCodec:
                 objects_txt += f'l {indexes}\n'
                 idx += n
 
-            elif obj_type == Curve:
+            elif isinstance(obj, Curve):
                 n = len(obj.vertices)
                 indexes = ''
                 for i in range(0, n):

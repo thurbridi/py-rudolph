@@ -77,7 +77,7 @@ class Point(GraphicObject):
         super().__init__(vertices=[pos], name=name)
 
     @property
-    def pos(self) -> float:
+    def pos(self) -> Vec2:
         return self.vertices[0]
 
     @pos.setter
