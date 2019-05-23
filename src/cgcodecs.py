@@ -1,8 +1,10 @@
 from __future__ import annotations  # for postponed annotations
+from pathlib import Path
 from typing import List
 
 
 from graphics import Vec2, GraphicObject, Point, Line, Polygon, Curve, Window
+from scene import Scene
 
 
 class ObjCodec:
@@ -11,8 +13,8 @@ class ObjCodec:
         return f'{v.x} {v.y} 1.0'
 
     @classmethod
-    def encode(cls, scene: 'Scene') -> str:
-        # Writes a subset of the Wavefront OBJ file format in ASCII
+    def encode(cls, scene: Scene) -> str:
+        '''Writes a subset of the Wavefront OBJ file format in ASCII.'''
         vertices_txt = ''
         objects_txt = ''
         idx = 1
@@ -123,3 +125,15 @@ class ObjCodec:
                 )
 
         return Scene(objs=objs, window=window)
+
+
+def load_scene(path: Path) -> Scene:
+    with open(path) as file:
+        contents = file.read()
+        return ObjCodec.decode(contents)
+
+
+def save_scene(scene: Scene, path: Path):
+    with open(path, 'w+') as file:
+        contents = ObjCodec.encode(scene)
+        file.write(contents)

@@ -3,7 +3,6 @@ from typing import List, Optional, Reversible
 
 from linalg import Vec2
 from graphics import GraphicObject, Window
-from cgcodecs import ObjCodec
 
 
 class Scene:
@@ -37,17 +36,6 @@ class Scene:
     def update_ndc(self):
         for obj in self.objs:
             obj.update_ndc(self.window)
-
-    @classmethod
-    def load(self, path: str):
-        with open(path) as file:
-            contents = file.read()
-            return ObjCodec.decode(contents)
-
-    def save(self, path: str):
-        with open(path, 'w+') as file:
-            contents = ObjCodec.encode(self)
-            file.write(contents)
 
     def clip_objects(self):
         pass

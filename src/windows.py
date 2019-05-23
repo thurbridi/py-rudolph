@@ -14,6 +14,7 @@ from graphics import (
     Vec2,
     Window,
 )
+from cgcodecs import load_scene, save_scene
 from scene import Scene
 from transformations import rotation_matrix, viewport_matrix
 
@@ -412,7 +413,7 @@ class MainWindowHandler:
             self.log(f'OPEN FILE: {path}')
 
             old_window = self.scene.window
-            self.scene = Scene.load(path)
+            self.scene = load_scene(path)
             self.scene.window = old_window
             self.scene.update_ndc()
 
@@ -427,8 +428,7 @@ class MainWindowHandler:
     def on_save_file(self, item):
         label = item.get_label()
         if label == 'gtk-save' and self.current_file is not None:
-            self.scene.save(self.current_file)
-            self.log(f'SAVE FILE: {self.current_file}')
+            self.save_scene()
 
         elif label == 'gtk-save-as' or self.current_file is None:
             file_chooser = self.new_file_chooser(Gtk.FileChooserAction.SAVE)
@@ -437,10 +437,13 @@ class MainWindowHandler:
             if response == Gtk.ResponseType.OK:
                 path = file_chooser.get_filename()
                 self.log(path)
-                self.scene.save(path)
+                self.save_scene()
                 self.current_file = path
-                self.log(f'SAVE AS FILE: {path}')
             file_chooser.destroy()
+
+    def save_scene(self):
+        save_scene(self.scene, self.current_file)
+        self.log(f'SAVE FILE: {self.current_file}')
 
     def new_file_chooser(self, action):
         file_chooser = Gtk.FileChooserDialog(
