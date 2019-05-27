@@ -152,8 +152,8 @@ class Polygon(GraphicObject):
             cr: Context,
             vp_matrix: np.ndarray
     ):
-        for i in range(len(self.vertices_ndc)):
-            next_vp = self.vertices_ndc[i] @ vp_matrix
+        for v in self.vertices_ndc:
+            next_vp = v @ vp_matrix
             cr.line_to(next_vp.x, next_vp.y)
         cr.close_path()
 

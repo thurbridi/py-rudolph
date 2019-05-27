@@ -89,7 +89,7 @@ def scale_matrix_3d(scale: Vec3) -> np.ndarray:
             0, 0, 0, 1,
         ],
         dtype=float
-    ).reshape(3, 3)
+    ).reshape(4, 4)
 
 
 def x_rotation_matrix_3d(angle: float) -> np.ndarray:

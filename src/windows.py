@@ -14,6 +14,7 @@ from graphics import (
     Vec2,
     Window,
 )
+from graphics3d import GraphicObject3D, Vec3
 from cgcodecs import load_scene, save_scene
 from scene import Scene
 from transformations import rotation_matrix, viewport_matrix
@@ -160,6 +161,47 @@ class MainWindowHandler:
         self.clipping_method = LineClippingMethod.COHEN_SUTHERLAND
         self.pressed_keys = set()
 
+        # 3D Tests
+        obj = GraphicObject3D(
+            vertices=[
+                Vec3(0, 0, 0, ),
+                Vec3(0, 0, 1, ),
+                Vec3(1, 0, 1, ),
+                Vec3(1, 0, 0, ),
+
+                Vec3(0, 0, 0, ),
+                Vec3(0, 1, 0, ),
+                Vec3(1, 1, 0, ),
+                Vec3(1, 0, 0, ),
+
+                Vec3(0, 0, 0, ),
+                Vec3(0, 0, 1, ),
+                Vec3(0, 1, 1, ),
+                Vec3(0, 1, 0, ),
+
+                Vec3(0, 0, 0, ),
+                Vec3(0, 0, 1, ),
+
+                Vec3(0, 0, 1, ),
+                Vec3(0, 1, 1, ),
+                Vec3(1, 1, 1, ),
+                Vec3(1, 0, 1, ),
+
+                Vec3(0, 0, 1, ),
+                Vec3(0, 1, 1, ),
+
+                Vec3(0, 1, 1, ),
+                Vec3(1, 1, 1, ),
+                Vec3(1, 1, 0, ),
+                Vec3(0, 1, 0, ),
+            ],
+            name='hmmm',
+        )
+
+        obj.rotate(30, 30, 30, reference=obj.centroid)
+
+        self.add_object(obj)
+
     def log(self, msg: str):
         self.output_buffer.insert_at_cursor(f'{msg}\n')
         scrollwindow = self.builder.get_object('output_scrollwindow')
@@ -227,9 +269,7 @@ class MainWindowHandler:
 
         if response == Gtk.ResponseType.OK:
             if dialog.new_object is not None:
-                self.log(f'Object added: <{type(dialog.new_object).__name__}>')
-                self.scene.add_object(dialog.new_object)
-                self.add_to_treeview(dialog.new_object)
+                self.add_object(dialog.new_object)
                 self.builder.get_object('drawing_area').queue_draw()
             else:
                 self.log('ERROR: invalid object')
@@ -357,7 +397,10 @@ class MainWindowHandler:
                     RotationRef.ABSOLUTE: Vec2(float(abs_x), float(abs_y)),
                 }[self.rotation_ref]
 
-                obj.rotate(*args, ref)
+                if isinstance(obj, GraphicObject3D):
+                    obj.rotate(args[0], 0, 0, ref)
+                else:
+                    obj.rotate(*args, ref)
             obj.update_ndc(self.scene.window)
 
         self.window.queue_draw()
@@ -367,6 +410,11 @@ class MainWindowHandler:
         store, rows = tree.get_selection().get_selected_rows()
 
         return (self.scene.objs[int(str(index))] for index in rows)
+
+    def add_object(self, obj: GraphicObject):
+        self.log(f'Object added: <{type(obj).__name__}>')
+        self.scene.add_object(obj)
+        self.add_to_treeview(obj)
 
     def add_to_treeview(self, obj: GraphicObject):
         self.object_store.append([
