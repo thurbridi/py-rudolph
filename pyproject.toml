@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "py-rudolph"
+version = "0.8"
+description = "This is an Interative Computer Graphics System made for UFSC's INE5420 course, called \"Computer Graphics\"."
+authors = [
+    "João Paulo Taylor Ienczak Zanette <jpaulotiz@gmail.com>",
+    "Arthur Bridi Guazzelli <arthur.b.guazzelli@gmail.com>",
+]
+license = "GPL-3.0+"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pycairo = "^1.18"
+pygobject = "^3.32"
+numpy = "^1.17"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.7"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
